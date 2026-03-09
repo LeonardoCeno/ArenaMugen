@@ -1,99 +1,69 @@
 <?php
 
-require_once __DIR__ . '/Personagem.php';
-require_once __DIR__ . '/Guerreiro.php';
-require_once __DIR__ . '/gojopasta/Gojo.php';
-require_once __DIR__ . '/sanspasta/Sans.php';
+require_once __DIR__ . '/GameService.php';
 require_once __DIR__ . '/ExcecaoJogo.php';
 
 function limparTela(): void {
     system('clear');
 }
 
-function exibirStatus(Personagem $p1, Personagem $p2, Personagem $atual, int $turno): void {
+function exibirStatus(array $game): void {
+    [$currentKey, $atual] = GameService::getCurrentAndOpponent($game);
 
-    echo "=== Turno de " . ($turno % 2 == 1 ? "Jogador 1" : "Jogador 2") . " ===\n";
+    /** @var Personagem $p1 */
+    $p1 = $game['p1'];
+    /** @var Personagem $p2 */
+    $p2 = $game['p2'];
 
+    $jogadorDaVez = $currentKey === 'p1' ? 'Jogador 1' : 'Jogador 2';
+
+    echo "=== Turno {$game['turno']} de {$jogadorDaVez} ({$atual->getNome()}) ===\n";
     echo "Jogador 1: {$p1->getNome()} (HP: {$p1->getVidaAtual()}/{$p1->getVidaMaxima()}, Energia: {$p1->getEnergiaAtual()}/{$p1->getEnergiaMaxima()})\n";
-
     echo "Jogador 2: {$p2->getNome()} (HP: {$p2->getVidaAtual()}/{$p2->getVidaMaxima()}, Energia: {$p2->getEnergiaAtual()}/{$p2->getEnergiaMaxima()})\n";
-
-    echo "\nAções disponíveis:\n";
-
-    echo "1. Atacar\n";
-    echo "2. Defender\n";
-
-    $habilidades = $atual->getHabilidades();
-
-    foreach ($habilidades as $i => $hab) {
-        echo ($i + 3) . ". " . $hab["nome"] . "\n";
-    }
-
-    echo "Escolha uma ação: ";
 }
 
 function escolherPersonagem(int $jogador): Personagem {
-
-    $personagens = [
-        1 => Guerreiro::class,
-        2 => Gojo::class,
-        3 => Sans::class
-    ];
+    $catalogo = GameService::getCharacterCatalog();
 
     echo "Jogador {$jogador}, escolha seu personagem:\n";
 
-    foreach ($personagens as $numero => $classe) {
-        echo "{$numero}. " . $classe::getDescricao() . "\n";
+    foreach ($catalogo as $index => $item) {
+        echo ($index + 1) . ". " . $item['description'] . "\n";
     }
 
     do {
 
         echo "Escolha: ";
 
-        $escolha = (int) trim(fgets(STDIN));
+        $input = trim((string)fgets(STDIN));
+        $escolha = is_numeric($input) ? (int)$input : -1;
 
-        if (!array_key_exists($escolha, $personagens)) {
+        if ($escolha < 1 || $escolha > count($catalogo)) {
             echo "Opção inválida. Escolha um personagem existente.\n";
         }
 
-    } while (!array_key_exists($escolha, $personagens));
+    } while ($escolha < 1 || $escolha > count($catalogo));
 
     echo "Digite o nome do personagem: ";
 
-    $nome = trim(fgets(STDIN));
+    $nome = trim((string)fgets(STDIN));
+    $item = $catalogo[$escolha - 1];
 
-    $classe = $personagens[$escolha];
-
-    return new $classe($nome);
+    return GameService::createCharacter($item['key'], $nome !== '' ? $nome : "Jogador {$jogador}");
 }
 
-function executarAcao(Personagem $atacante, Personagem $defensor, int $acao): string {
+function exibirAcoesDisponiveis(Personagem $atual): array {
+    $acoes = GameService::buildAvailableActions($atual);
 
-    if ($acao == 1) {
-        return $atacante->atacar($defensor);
+    echo "\nAções disponíveis:\n";
+
+    foreach ($acoes as $index => $acao) {
+        echo ($index + 1) . ". " . $acao['label'] . "\n";
     }
 
-    if ($acao == 2) {
-        return $atacante->defender();
-    }
+    echo "Escolha uma ação: ";
 
-    $habilidades = $atacante->getHabilidades();
-
-    $index = $acao - 3;
-
-    if (!isset($habilidades[$index])) {
-        throw new EntradaInvalidaException();
-    }
-
-    $habilidade = $habilidades[$index];
-
-    $metodo = $habilidade["metodo"];
-
-    if ($habilidade["precisaAlvo"]) {
-        return $atacante->$metodo($defensor);
-    }
-
-    return $atacante->$metodo();
+    return $acoes;
 }
 
 function main(): void {
@@ -106,32 +76,36 @@ function main(): void {
 
         $p1 = escolherPersonagem(1);
         $p2 = escolherPersonagem(2);
+        $game = GameService::createGameState($p1, $p2);
 
-        $turno = 1;
-
-        while ($p1->estaVivo() && $p2->estaVivo()) {
+        while (GameService::determineWinner($game) === null) {
 
             limparTela();
 
-            $atual = ($turno % 2 == 1) ? $p1 : $p2;
-            $oponente = ($turno % 2 == 1) ? $p2 : $p1;
-
-            exibirStatus($p1, $p2, $atual, $turno);
+            [, $atual] = GameService::getCurrentAndOpponent($game);
+            exibirStatus($game);
+            $acoes = exibirAcoesDisponiveis($atual);
 
             try {
 
-                $input = trim(fgets(STDIN));
+                $input = trim((string)fgets(STDIN));
 
                 if (!is_numeric($input)) {
                     throw new EntradaInvalidaException();
                 }
 
-                $acao = (int)$input;
+                $acaoIndex = (int)$input - 1;
 
-                $resultado = executarAcao($atual, $oponente, $acao);
+                if (!isset($acoes[$acaoIndex])) {
+                    throw new EntradaInvalidaException();
+                }
 
-                // AGORA o turno inicia após ação válida
-                $atual->iniciarTurno();
+                $acaoSelecionada = $acoes[$acaoIndex];
+                $resultado = GameService::performTurn(
+                    $game,
+                    (string)$acaoSelecionada['type'],
+                    isset($acaoSelecionada['skillIndex']) ? (int)$acaoSelecionada['skillIndex'] : null
+                );
 
                 echo "\n{$resultado}\n";
 
@@ -143,13 +117,12 @@ function main(): void {
 
             echo "\nPressione Enter para continuar...";
             fgets(STDIN);
-
-            $turno++;
         }
 
         limparTela();
 
-        if (!$p1->estaVivo()) {
+        $winner = GameService::determineWinner($game);
+        if ($winner === 'p2') {
             echo "Jogador 2 venceu!\n";
         } else {
             echo "Jogador 1 venceu!\n";

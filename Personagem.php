@@ -53,6 +53,10 @@ abstract class Personagem {
         return $this->defesa + ($this->defendendo ? $this->bonusDefesaTemporario : 0);
     }
 
+    public function estaDefendendo(): bool {
+        return $this->defendendo;
+    }
+
     public function estaVivo(): bool {
         return $this->vidaAtual > 0;
     }
@@ -161,6 +165,7 @@ abstract class Personagem {
         return [
             'baseSprite' => null,
             'actions' => [],
+            'reactions' => [],
         ];
     }
 

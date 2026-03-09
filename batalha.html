@@ -104,6 +104,14 @@
         <img class="fighter-img" alt="Personagem do jogador 1" />
         <span>S</span>
       </div>
+
+      <div class="winner-overlay hidden" id="winner-overlay" aria-live="polite">
+        <div class="winner-card">
+          <img id="winner-sprite" class="winner-sprite" alt="Vencedor" />
+          <p id="winner-text" class="winner-text">Jogador venceu!</p>
+          <button id="play-again-btn" class="play-again-btn">JOGAR NOVAMENTE</button>
+        </div>
+      </div>
     </section>
 
     <section class="hud">
@@ -150,6 +158,10 @@
         p2Name: document.getElementById("p2-name"),
         p1Class: document.getElementById("p1-class"),
         p2Class: document.getElementById("p2-class"),
+        winnerOverlay: document.getElementById("winner-overlay"),
+        winnerSprite: document.getElementById("winner-sprite"),
+        winnerText: document.getElementById("winner-text"),
+        playAgainBtn: document.getElementById("play-again-btn"),
       };
 
       async function chamarApi(action, payload = {}) {
@@ -241,9 +253,54 @@
         return hpMax > 0 && (hpAtual / hpMax) <= 0.3;
       }
 
+      function mostrarTelaVitoria(server) {
+        if (!server || !server.winner) {
+          els.winnerOverlay.classList.add("hidden");
+          return;
+        }
+
+        const vencedor = server.winner === "p1" ? server.p1 : server.p2;
+        const labelVencedor = server.winner === "p1" ? "Jogador 1" : "Jogador 2";
+        const spriteBase = vencedor?.visual?.baseSprite || "";
+
+        els.winnerText.textContent = `${labelVencedor} (${vencedor.nome}) venceu!`;
+
+        if (spriteBase) {
+          els.winnerSprite.src = spriteBase;
+          els.winnerSprite.style.display = "block";
+        } else {
+          els.winnerSprite.removeAttribute("src");
+          els.winnerSprite.style.display = "none";
+        }
+
+        els.winnerOverlay.classList.remove("hidden");
+      }
+
+      function resetarParaSetup() {
+        state.serverState = null;
+        state.resolvendoAcao = false;
+        limparSpritesTemporarios();
+
+        els.battleView.classList.add("hidden");
+        els.setupPanel.classList.remove("hidden");
+        els.winnerOverlay.classList.add("hidden");
+
+        els.turnInfo.textContent = "Prepare a partida";
+        els.log.innerHTML = "";
+        adicionarLog("Configure os jogadores e clique em INICIAR BATALHA.");
+
+        els.menu.innerHTML = `
+          <button disabled>ATACAR</button>
+          <button disabled>DEFENDER</button>
+          <button disabled>HABILIDADE 1</button>
+          <button disabled>HABILIDADE 2</button>
+        `;
+      }
+
       function atualizarHUD() {
         const server = state.serverState;
         if (!server || !server.started) {
+          els.winnerOverlay.classList.add("hidden");
           return;
         }
 
@@ -272,8 +329,11 @@
 
         if (server.winner) {
           els.turnInfo.textContent = `${server.winner === "p1" ? "Jogador 1" : "Jogador 2"} venceu!`;
+          mostrarTelaVitoria(server);
           return;
         }
+
+        els.winnerOverlay.classList.add("hidden");
 
         const jogadorDaVez = server.currentKey === "p1" ? "Jogador 1" : "Jogador 2";
         const nomeDaVez = server.currentKey === "p1" ? server.p1.nome : server.p2.nome;
@@ -334,9 +394,27 @@
           }));
       }
 
-      function executarAnimacaoFrames(ladoAtacante, frames) {
+      function obterFramesReacaoDefesa(chaveJogador) {
+        const server = state.serverState;
+        if (!server || !server[chaveJogador]) {
+          return [];
+        }
+
+        const reactions = server[chaveJogador].visual?.reactions || {};
+        const reaction = reactions.defendingHit;
+        const frames = Array.isArray(reaction?.frames) ? reaction.frames : [];
+
+        return frames
+          .filter((frame) => frame && typeof frame.sprite === "string" && frame.sprite.trim() !== "")
+          .map((frame) => ({
+            sprite: frame.sprite,
+            durationMs: Number(frame.durationMs) > 0 ? Number(frame.durationMs) : 0,
+          }));
+      }
+
+      function executarAnimacaoFrames(ladoAtacante, frames, duracaoPadrao = ACTION_DELAY_MS) {
         if (!frames.length) {
-          return ACTION_DELAY_MS;
+          return duracaoPadrao;
         }
 
         let acumulado = 0;
@@ -398,14 +476,23 @@
         }
 
         const atacanteKey = state.serverState.currentKey;
+        const defensorKey = atacanteKey === "p1" ? "p2" : "p1";
         const ladoAtacante = obterChaveLado(atacanteKey);
+        const ladoDefensor = obterChaveLado(defensorKey);
         const nomeAcao = acao.nomeSprite || acao.nome;
         const framesAnimacao = obterFramesAnimacaoAcao(atacanteKey, nomeAcao);
+        const defensorEstaDefendendo = state.serverState[defensorKey]?.defendendo === true;
+        const acaoAtingeOponente = acao.targetsOpponent === true;
+        const framesReacaoDefesa = (acaoAtingeOponente && defensorEstaDefendendo)
+          ? obterFramesReacaoDefesa(defensorKey)
+          : [];
 
         state.resolvendoAcao = true;
         setBotoesAcaoHabilitados(false);
 
-        const tempoResolucao = executarAnimacaoFrames(ladoAtacante, framesAnimacao);
+        const duracaoAtaque = executarAnimacaoFrames(ladoAtacante, framesAnimacao, ACTION_DELAY_MS);
+        const duracaoDefesa = executarAnimacaoFrames(ladoDefensor, framesReacaoDefesa, 0);
+        const tempoResolucao = Math.max(duracaoAtaque, duracaoDefesa);
 
         setTimeout(async () => {
           try {
@@ -480,6 +567,7 @@
       }
 
       els.startBtn.addEventListener("click", iniciar);
+      els.playAgainBtn.addEventListener("click", resetarParaSetup);
       adicionarLog("Configure os jogadores e clique em INICIAR BATALHA.");
     })();
   </script>

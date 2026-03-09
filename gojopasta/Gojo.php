@@ -1,7 +1,7 @@
 <?php
 
-require_once 'Personagem.php';
-require_once 'ExcecaoJogo.php';
+require_once __DIR__ . '/../Personagem.php';
+require_once __DIR__ . '/../ExcecaoJogo.php';
 
 class Gojo extends Personagem {
 
@@ -104,6 +104,26 @@ class Gojo extends Personagem {
         return [
             'baseSprite' => './gojopasta/GOJOBASEFINAL.png',
             'actions' => [
+                'Ataque' => [
+                    'frames' => [
+                        [
+                            'sprite' => './gojopasta/gojopancadafinalmenor.png',
+                            'durationMs' => 450,
+                        ],
+                        [
+                            'sprite' => './gojopasta/gojohitpt2.png',
+                            'durationMs' => 450,
+                        ],
+                    ],
+                ],
+                'Azul' => [
+                    'frames' => [
+                        [
+                            'sprite' => './gojopasta/gojoazulfinalreal.png',
+                            'durationMs' => 2000,
+                        ],
+                    ],
+                ],
                 'Vazio Roxo' => [
                     'frames' => [
                         [
@@ -113,6 +133,16 @@ class Gojo extends Personagem {
                         [
                             'sprite' => './gojopasta/gojoROXOFINALFINALVERDADEIRO.png',
                             'durationMs' => 1000,
+                        ],
+                    ],
+                ],
+            ],
+            'reactions' => [
+                'defendingHit' => [
+                    'frames' => [
+                        [
+                            'sprite' => './gojopasta/gojoblockrealreal.png',
+                            'durationMs' => 1200,
                         ],
                     ],
                 ],

@@ -1,7 +1,7 @@
 <?php
 
-require_once 'Personagem.php';
-require_once 'ExcecaoJogo.php';
+require_once __DIR__ . '/../Personagem.php';
+require_once __DIR__ . '/../ExcecaoJogo.php';
 
 class Sans extends Personagem {
 

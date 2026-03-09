@@ -1,13 +1,13 @@
 :root {
-  --bg: #090f1f;
-  --bg-soft: #141f3a;
-  --panel: #10182d;
-  --line: #2f4f77;
-  --line-soft: #466a94;
-  --text: #e9f2ff;
-  --muted: #a9c0de;
-  --accent: #62e3c6;
-  --accent-2: #6aa9ff;
+  --bg: #121219;
+  --bg-soft: #1b1f2b;
+  --panel: #181c27;
+  --line: #4b5368;
+  --line-soft: #68718a;
+  --text: #edf1fb;
+  --muted: #b8c0d6;
+  --accent: #7ed6c6;
+  --accent-2: #8ca4d8;
   --hp: #66e08b;
   --hp-danger: #ffd46d;
   --energy: #7fc4ff;
@@ -29,7 +29,7 @@ body {
   display: grid;
   place-items: center;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  background: radial-gradient(circle at 20% 10%, #1d2c51, var(--bg));
+  background: radial-gradient(circle at 20% 10%, #2a2d3f, var(--bg));
   color: var(--text);
 }
 
@@ -39,7 +39,7 @@ body {
   border: 1px solid var(--line-soft);
   border-radius: 0;
   overflow: hidden;
-  background: linear-gradient(180deg, #0f1930, #0a1326 65%, #0a1222);
+  background: linear-gradient(180deg, #1b1f2e, #161a27 65%, #111420);
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   display: grid;
   grid-template-rows: auto 1fr;
@@ -78,7 +78,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 20px;
-  background: linear-gradient(180deg, #121f3b, #0d1830);
+  background: linear-gradient(180deg, #252a3a, #1c2130);
 }
 
 .setup-card h2 {
@@ -112,9 +112,9 @@ body {
 .setup-screen input,
 .setup-screen select,
 .start-btn {
-  background: #0f1b35;
+  background: #222838;
   color: var(--text);
-  border: 1px solid #3c6290;
+  border: 1px solid #6a748f;
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 0.9rem;
@@ -130,7 +130,7 @@ body {
 }
 
 .start-btn:hover {
-  border-color: #6ea0db;
+  border-color: #99a5c6;
 }
 
 .battle-view {
@@ -148,15 +148,15 @@ body {
   height: 100%;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, #16325b 0%, #0c1d3b 40%, #10274a 100%);
+  background: linear-gradient(180deg, #353447 0%, #24273a 42%, #202331 100%);
 }
 
 .arena-glow {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 15%, rgba(104, 188, 255, 0.35), transparent 35%),
-    radial-gradient(circle at 80% 10%, rgba(98, 227, 198, 0.2), transparent 30%);
+    radial-gradient(circle at 20% 15%, rgba(165, 146, 236, 0.24), transparent 35%),
+    radial-gradient(circle at 80% 10%, rgba(126, 214, 198, 0.16), transparent 30%);
 }
 
 .arena-floor {
@@ -167,8 +167,8 @@ body {
   height: 260px;
   border-radius: 50%;
   background:
-    radial-gradient(ellipse at center, #2f5382 0%, #203f67 45%, #172f50 80%);
-  border: 1px solid rgba(130, 180, 239, 0.35);
+    radial-gradient(ellipse at center, #414765 0%, #32374f 45%, #262a3f 80%);
+  border: 1px solid rgba(150, 160, 194, 0.35);
 }
 
 .card {
@@ -231,8 +231,8 @@ body {
 .track {
   height: 10px;
   border-radius: 999px;
-  background: #0a1325;
-  border: 1px solid #294b76;
+  background: #171b27;
+  border: 1px solid #515c75;
   overflow: hidden;
 }
 
@@ -339,6 +339,58 @@ body {
   background: transparent;
 }
 
+.winner-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 12, 18, 0.55);
+}
+
+.winner-card {
+  width: min(420px, 82vw);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 18px 16px;
+  background: linear-gradient(180deg, rgba(39, 45, 61, 0.95), rgba(27, 33, 45, 0.95));
+  text-align: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.winner-sprite {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.winner-text {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.play-again-btn {
+  background: #2e3548;
+  color: var(--text);
+  border: 1px solid #6a748f;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.play-again-btn:hover {
+  border-color: #9ea9c7;
+  background: #394157;
+}
+
 .hud {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
@@ -351,7 +403,7 @@ body {
 .controls {
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: linear-gradient(180deg, #0f1b35, #0c162d);
+  background: linear-gradient(180deg, #222838, #1a1f2d);
   padding: 12px;
 }
 
@@ -384,9 +436,9 @@ body {
 }
 
 .grid-actions button {
-  border: 1px solid #3c6290;
+  border: 1px solid #6a748f;
   border-radius: 10px;
-  background: linear-gradient(180deg, #1a2e52, #112240);
+  background: linear-gradient(180deg, #2e3548, #252b3b);
   color: var(--text);
   font-size: 0.86rem;
   font-weight: 700;
@@ -398,8 +450,8 @@ body {
 
 .grid-actions button:hover {
   transform: translateY(-1px);
-  border-color: #6ea0db;
-  background: linear-gradient(180deg, #223d69, #17335d);
+  border-color: #9ea9c7;
+  background: linear-gradient(180deg, #394157, #2e3548);
 }
 
 .grid-actions button:focus-visible {

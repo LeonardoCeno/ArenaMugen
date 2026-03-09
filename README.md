@@ -1,42 +1,57 @@
-# Jogo de Combate por Turnos
+# Jogo de Combate por Turnos (PHP)
 
-Este é um protótipo de jogo de combate por turnos desenvolvido em PHP, rodando inteiramente no terminal. Dois jogadores controlam personagens em um duelo 1 contra 1, revezando turnos.
+Projeto de batalha por turnos com dois modos de execução:
 
-## Como Executar
+- Terminal (CLI) via `index.php`
+- Web via `batalha.html` + `web_api.php`
 
-Certifique-se de ter PHP 8.1 ou superior instalado. Execute o comando:
+As regras de turno e ações foram centralizadas em `GameService.php` para evitar duplicação entre CLI e Web.
 
-```
+## Requisitos
+
+- PHP 8.1+
+
+## Executar no Terminal
+
+```bash
 php index.php
 ```
 
-## Personagens Disponíveis
+## Executar no Web
+
+```bash
+php -S 127.0.0.1:8080
+```
+
+Abra no navegador:
+
+- `http://127.0.0.1:8080/batalha.html`
+
+## Personagens
 
 ### Guerreiro
-- **Atributos**: Vida: 120, Ataque: 25, Defesa: 10, Energia: 80
-- **Habilidade Especial**: Golpe Poderoso (custa 30 energia) - Causa dano dobrado ao oponente.
+- Vida 120, Ataque 25, Defesa 10, Energia 80
+- Habilidade: Golpe Poderoso
 
-### Mago
-- **Atributos**: Vida: 80, Ataque: 15, Defesa: 5, Energia: 120
-- **Habilidade Especial**: Cura Mágica (custa 40 energia) - Recupera 30 HP do próprio personagem.
+### Gojo
+- Vida 200, Ataque 15, Defesa 5, Energia 1000
+- Habilidades: Azul, Vazio Roxo, Reverse Energy
 
 ### Sans
-- **Atributos**: Vida: 100, Ataque: 20, Defesa: 8, Energia: 100
-- **Habilidade Especial**: Blaster (custa 50 energia) - Ataque mágico que causa dano triplo ao oponente.
+- Vida 1, Ataque 30, Defesa 1, Energia 200
+- Habilidades: Blaster, Parede de Ossos
+- Regra especial: enquanto tiver energia, dano recebido é absorvido na energia
 
-## Regras do Jogo
+## Estrutura
 
-- Cada jogador escolhe um personagem no início.
-- Turnos alternados: Atacar, Defender ou Usar Habilidade Especial.
-- O jogo termina quando um personagem fica com 0 HP ou menos.
-- Energia regenera 10 pontos por turno.
-- Defender aumenta temporariamente a defesa.
+- `Personagem.php`: classe base e mecânicas comuns
+- `Guerreiro.php`, `gojopasta/Gojo.php`, `sanspasta/Sans.php`: classes concretas
+- `GameService.php`: fluxo central de partida (turno, ação, estado)
+- `web_api.php`: camada HTTP/JSON para o front-end
+- `index.php`: interface de terminal reutilizando `GameService.php`
+- `batalha.html` / `batalha.css`: interface web
 
-## Conceitos de POO Utilizados
+## Observações
 
-- **Abstração**: Classe abstrata `Personagem`.
-- **Herança**: `Guerreiro` e `Mago` herdam de `Personagem`.
-- **Polimorfismo**: Métodos como `usarHabilidadeEspecial` são implementados diferentemente.
-- **Encapsulamento**: Atributos protegidos, acesso via métodos.
-- **Interface**: `AcaoCombate` (não utilizada diretamente, mas presente).
-- **Tratamento de Exceções**: Exceções personalizadas para erros.
+- As configurações visuais por personagem (sprite base e animações por ação) vêm das classes PHP e são enviadas pela API.
+- Para abrir o modo Web, use servidor local (`http://`), não `file://`.
