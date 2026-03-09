@@ -1,0 +1,470 @@
+:root {
+  --bg: #090f1f;
+  --bg-soft: #141f3a;
+  --panel: #10182d;
+  --line: #2f4f77;
+  --line-soft: #466a94;
+  --text: #e9f2ff;
+  --muted: #a9c0de;
+  --accent: #62e3c6;
+  --accent-2: #6aa9ff;
+  --hp: #66e08b;
+  --hp-danger: #ffd46d;
+  --energy: #7fc4ff;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at 20% 10%, #1d2c51, var(--bg));
+  color: var(--text);
+}
+
+.battle-app {
+  width: min(1120px, 100vw);
+  height: 100dvh;
+  border: 1px solid var(--line-soft);
+  border-radius: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0f1930, #0a1326 65%, #0a1222);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.16em;
+}
+
+.topbar p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.setup-screen {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.setup-card {
+  width: min(900px, 94vw);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  background: linear-gradient(180deg, #121f3b, #0d1830);
+}
+
+.setup-card h2 {
+  margin: 0 0 8px;
+}
+
+.setup-card p {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.setup-row {
+  display: grid;
+  gap: 8px;
+}
+
+.setup-row h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+.setup-screen input,
+.setup-screen select,
+.start-btn {
+  background: #0f1b35;
+  color: var(--text);
+  border: 1px solid #3c6290;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.start-btn {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.start-btn {
+  width: 100%;
+}
+
+.start-btn:hover {
+  border-color: #6ea0db;
+}
+
+.battle-view {
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.arena {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #16325b 0%, #0c1d3b 40%, #10274a 100%);
+}
+
+.arena-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(104, 188, 255, 0.35), transparent 35%),
+    radial-gradient(circle at 80% 10%, rgba(98, 227, 198, 0.2), transparent 30%);
+}
+
+.arena-floor {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -110px;
+  height: 260px;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at center, #2f5382 0%, #203f67 45%, #172f50 80%);
+  border: 1px solid rgba(130, 180, 239, 0.35);
+}
+
+.card {
+  position: absolute;
+  width: 330px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(22, 35, 63, 0.95), rgba(14, 24, 45, 0.95));
+  backdrop-filter: blur(2px);
+  z-index: 3;
+}
+
+.card-enemy {
+  top: 24px;
+  left: 26px;
+}
+
+.card-player {
+  right: 26px;
+  bottom: 20px;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.card-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+}
+
+.card-head span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.meter {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.meter label {
+  font-size: 0.74rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.meter strong {
+  font-size: 0.82rem;
+}
+
+.track {
+  height: 10px;
+  border-radius: 999px;
+  background: #0a1325;
+  border: 1px solid #294b76;
+  overflow: hidden;
+}
+
+.value {
+  height: 100%;
+  transition: width 240ms ease;
+}
+
+.value.hp {
+  background: linear-gradient(90deg, #52d27d, var(--hp));
+}
+
+.value.hp.danger {
+  background: linear-gradient(90deg, #f6b951, var(--hp-danger));
+}
+
+.value.energy {
+  background: linear-gradient(90deg, #5ca5ff, var(--energy));
+}
+
+.fighter {
+  position: absolute;
+  width: 306px;
+  height: 306px;
+  border-radius: 0;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.fighter span {
+  font-size: 4.2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.fighter-img {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  border-radius: 0;
+  background: transparent;
+}
+
+.fighter.has-image .fighter-img {
+  display: block;
+}
+
+.fighter.has-image span {
+  display: none;
+}
+
+.fighter.is-flipped .fighter-img {
+  transform: scaleX(-1);
+}
+
+.fighter.dodge-anim {
+  animation-duration: 1.2s;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+}
+
+.fighter.enemy.dodge-anim {
+  animation-name: dodge-right;
+}
+
+.fighter.player.dodge-anim {
+  animation-name: dodge-left;
+}
+
+@keyframes dodge-right {
+  0% { transform: translateX(0); }
+  35% { transform: translateX(32px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes dodge-left {
+  0% { transform: translateX(0); }
+  35% { transform: translateX(-32px); }
+  100% { transform: translateX(0); }
+}
+
+.fighter.action-casting {
+  box-shadow: none;
+  filter: saturate(1.15) brightness(1.05);
+}
+
+.fighter.enemy {
+  right: 96px;
+  top: auto;
+  bottom: 140px;
+  background: transparent;
+  z-index: 4;
+}
+
+.fighter.player {
+  left: 130px;
+  bottom: 0;
+  background: transparent;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 14px;
+  padding: 10px 12px;
+  min-height: 165px;
+}
+
+.feed,
+.controls {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #0f1b35, #0c162d);
+  padding: 12px;
+}
+
+.feed h3,
+.controls h3 {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.feed ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 7px;
+  max-height: 95px;
+  overflow: auto;
+}
+
+.feed li {
+  font-size: 0.96rem;
+}
+
+.grid-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-content: start;
+}
+
+.grid-actions button {
+  border: 1px solid #3c6290;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #1a2e52, #112240);
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.grid-actions button:hover {
+  transform: translateY(-1px);
+  border-color: #6ea0db;
+  background: linear-gradient(180deg, #223d69, #17335d);
+}
+
+.grid-actions button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+@media (max-width: 860px) {
+  .card {
+    width: 285px;
+  }
+
+  .fighter span {
+    font-size: 3.1rem;
+  }
+
+  .fighter.enemy {
+    right: 72px;
+    top: auto;
+    bottom: 146px;
+  }
+
+  .fighter.player {
+    left: 70px;
+    bottom: 20px;
+  }
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .setup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hud {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    width: calc(100% - 24px);
+    left: 12px;
+    right: 12px;
+  }
+
+  .card-enemy {
+    top: 10px;
+  }
+
+  .card-player {
+    bottom: 10px;
+  }
+
+  .fighter.enemy {
+    right: 24px;
+    top: auto;
+    bottom: 228px;
+  }
+
+  .fighter.player {
+    left: 16px;
+    bottom: 86px;
+  }
+}

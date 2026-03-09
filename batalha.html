@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arena de Turnos</title>
+  <link rel="stylesheet" href="batalha.css" />
+</head>
+<body>
+  <main class="battle-app">
+    <header class="topbar">
+      <h1>ARENA DE TURNOS</h1>
+      <p id="turn-info">Prepare a partida</p>
+    </header>
+
+    <section class="setup-screen" id="setup-panel">
+      <div class="setup-card">
+        <h2>Configuração da Partida</h2>
+        <p>Defina nome e classe dos dois jogadores para iniciar o duelo.</p>
+
+        <div class="setup-grid">
+          <div class="setup-row">
+            <h3>Jogador 1</h3>
+            <input id="p1-name" type="text" value="Jogador 1" maxlength="20" />
+            <select id="p1-class">
+              <option value="guerreiro">Guerreiro</option>
+              <option value="gojo">Gojo</option>
+              <option value="sans">Sans</option>
+            </select>
+          </div>
+
+          <div class="setup-row">
+            <h3>Jogador 2</h3>
+            <input id="p2-name" type="text" value="Jogador 2" maxlength="20" />
+            <select id="p2-class">
+              <option value="guerreiro">Guerreiro</option>
+              <option value="gojo" selected>Gojo</option>
+              <option value="sans">Sans</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="start-btn" class="start-btn">INICIAR BATALHA</button>
+      </div>
+    </section>
+
+    <section class="battle-view hidden" id="battle-view">
+    <section class="arena" aria-label="Campo de batalha">
+      <div class="arena-glow"></div>
+      <div class="arena-floor"></div>
+
+      <article class="card card-enemy" id="card-enemy">
+        <div class="card-head">
+          <h2 id="enemy-name">-</h2>
+          <span id="enemy-tag">Jogador 2</span>
+        </div>
+
+        <div class="meter">
+          <label>HP</label>
+          <div class="track">
+            <div class="value hp" id="enemy-hp-bar" style="width: 0%"></div>
+          </div>
+          <strong id="enemy-hp-text">0 / 0</strong>
+        </div>
+
+        <div class="meter">
+          <label>ENERGIA</label>
+          <div class="track">
+            <div class="value energy" id="enemy-energy-bar" style="width: 0%"></div>
+          </div>
+          <strong id="enemy-energy-text">0 / 0</strong>
+        </div>
+      </article>
+
+      <article class="card card-player" id="card-player">
+        <div class="card-head">
+          <h2 id="player-name">-</h2>
+          <span id="player-tag">Jogador 1</span>
+        </div>
+
+        <div class="meter">
+          <label>HP</label>
+          <div class="track">
+            <div class="value hp" id="player-hp-bar" style="width: 0%"></div>
+          </div>
+          <strong id="player-hp-text">0 / 0</strong>
+        </div>
+
+        <div class="meter">
+          <label>ENERGIA</label>
+          <div class="track">
+            <div class="value energy" id="player-energy-bar" style="width: 0%"></div>
+          </div>
+          <strong id="player-energy-text">0 / 0</strong>
+        </div>
+      </article>
+
+      <div class="fighter enemy" id="fighter-enemy" data-side="player2" aria-hidden="true">
+        <img class="fighter-img" alt="Personagem do jogador 2" />
+        <span>G</span>
+      </div>
+
+      <div class="fighter player" id="fighter-player" data-side="player1" aria-hidden="true">
+        <img class="fighter-img" alt="Personagem do jogador 1" />
+        <span>S</span>
+      </div>
+    </section>
+
+    <section class="hud">
+      <div class="feed">
+        <h3>LOG DE COMBATE</h3>
+        <ul id="battle-log"></ul>
+      </div>
+
+      <aside class="controls" aria-label="Ações disponíveis">
+        <h3>AÇÕES</h3>
+        <div class="grid-actions" id="action-menu">
+          <button disabled>ATACAR</button>
+          <button disabled>DEFENDER</button>
+          <button disabled>HABILIDADE 1</button>
+          <button disabled>HABILIDADE 2</button>
+        </div>
+      </aside>
+    </section>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const API_URL = "./web_api.php";
+      const GOJO_IMAGE = "./gojopasta/GOJOBASEFINAL.png";
+      const GOJO_ROXO_FASE_1 = "./gojopasta/GOJOROXOFASE1FINAL.png";
+      const GOJO_ROXO_FASE_2 = "./gojopasta/gojoROXOFINALFINALVERDADEIRO.png";
+      const SANS_IMAGE = "./sanspasta/SANSBASEFINAL.png";
+      const SANS_SKILL_1_IMAGE = "./sanspasta/SANSSKILL1FINAL.png";
+      const ACTION_DELAY_MS = 2000;
+
+      const SPRITES_PERSONALIZADOS_ACAO = {
+        gojo: {
+          "Vazio Roxo": GOJO_ROXO_FASE_1,
+        },
+        sans: {
+          "Parede de Ossos": SANS_SKILL_1_IMAGE,
+        },
+      };
+
+      const state = {
+        serverState: null,
+        resolvendoAcao: false,
+        spriteTemporario: {
+          player1: null,
+          player2: null,
+        },
+      };
+
+      const els = {
+        turnInfo: document.getElementById("turn-info"),
+        log: document.getElementById("battle-log"),
+        menu: document.getElementById("action-menu"),
+        setupPanel: document.getElementById("setup-panel"),
+        battleView: document.getElementById("battle-view"),
+        startBtn: document.getElementById("start-btn"),
+        p1Name: document.getElementById("p1-name"),
+        p2Name: document.getElementById("p2-name"),
+        p1Class: document.getElementById("p1-class"),
+        p2Class: document.getElementById("p2-class"),
+      };
+
+      async function chamarApi(action, payload = {}) {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action, ...payload }),
+        });
+
+        if (!response.ok) {
+          let mensagemErro = `Falha na API (${response.status}).`;
+          try {
+            const corpoErro = await response.json();
+            if (corpoErro && corpoErro.message) {
+              mensagemErro = corpoErro.message;
+            }
+          } catch (_) {}
+
+          throw new Error(mensagemErro);
+        }
+
+        return response.json();
+      }
+
+      function aplicarVisualPersonagem(nomeClasse, fighterEl, spriteTemporario = null) {
+        const nomeNormalizado = String(nomeClasse || "").trim().toLowerCase();
+        const img = fighterEl.querySelector(".fighter-img");
+        const initial = fighterEl.querySelector("span");
+
+        fighterEl.classList.remove("has-image", "is-flipped");
+        img.removeAttribute("src");
+
+        if (spriteTemporario) {
+          img.src = spriteTemporario;
+          fighterEl.classList.add("has-image", "action-casting");
+
+          if (fighterEl.dataset.side === "player2") {
+            fighterEl.classList.add("is-flipped");
+          }
+
+          img.onerror = function () {
+            fighterEl.classList.remove("has-image", "is-flipped", "action-casting");
+          };
+
+          if (initial) {
+            initial.textContent = (nomeClasse || "?").trim().charAt(0).toUpperCase() || "?";
+          }
+          return;
+        }
+
+        fighterEl.classList.remove("action-casting");
+
+        if (nomeNormalizado === "gojo") {
+          img.src = GOJO_IMAGE;
+          fighterEl.classList.add("has-image");
+          if (fighterEl.dataset.side === "player2") {
+            fighterEl.classList.add("is-flipped");
+          }
+        } else if (nomeNormalizado === "sans") {
+          img.src = SANS_IMAGE;
+          fighterEl.classList.add("has-image");
+        }
+
+        img.onerror = function () {
+          fighterEl.classList.remove("has-image", "is-flipped");
+        };
+
+        if (initial) {
+          initial.textContent = (nomeClasse || "?").trim().charAt(0).toUpperCase() || "?";
+        }
+      }
+
+      function adicionarLog(texto) {
+        const li = document.createElement("li");
+        li.textContent = texto;
+        els.log.prepend(li);
+        while (els.log.children.length > 8) {
+          els.log.removeChild(els.log.lastChild);
+        }
+      }
+
+      function percentual(atual, maximo) {
+        if (maximo <= 0) return "0%";
+        return `${Math.max(0, Math.min(100, (atual / maximo) * 100))}%`;
+      }
+
+      function classePerigosa(hpAtual, hpMax) {
+        return hpMax > 0 && (hpAtual / hpMax) <= 0.3;
+      }
+
+      function atualizarHUD() {
+        const server = state.serverState;
+        if (!server || !server.started) {
+          return;
+        }
+
+        const enemy = server.p2;
+        const player = server.p1;
+
+        document.getElementById("enemy-name").textContent = enemy.classeNome.toUpperCase();
+        document.getElementById("enemy-tag").textContent = enemy.nome;
+        document.getElementById("enemy-hp-text").textContent = `${enemy.vidaAtual} / ${enemy.vidaMaxima}`;
+        document.getElementById("enemy-energy-text").textContent = `${enemy.energiaAtual} / ${enemy.energiaMaxima}`;
+        document.getElementById("enemy-hp-bar").style.width = percentual(enemy.vidaAtual, enemy.vidaMaxima);
+        document.getElementById("enemy-energy-bar").style.width = percentual(enemy.energiaAtual, enemy.energiaMaxima);
+
+        document.getElementById("player-name").textContent = player.classeNome.toUpperCase();
+        document.getElementById("player-tag").textContent = player.nome;
+        document.getElementById("player-hp-text").textContent = `${player.vidaAtual} / ${player.vidaMaxima}`;
+        document.getElementById("player-energy-text").textContent = `${player.energiaAtual} / ${player.energiaMaxima}`;
+        document.getElementById("player-hp-bar").style.width = percentual(player.vidaAtual, player.vidaMaxima);
+        document.getElementById("player-energy-bar").style.width = percentual(player.energiaAtual, player.energiaMaxima);
+
+        document.getElementById("player-hp-bar").classList.toggle("danger", classePerigosa(player.vidaAtual, player.vidaMaxima));
+        document.getElementById("enemy-hp-bar").classList.toggle("danger", classePerigosa(enemy.vidaAtual, enemy.vidaMaxima));
+
+        aplicarVisualPersonagem(enemy.classe, document.getElementById("fighter-enemy"), state.spriteTemporario.player2);
+        aplicarVisualPersonagem(player.classe, document.getElementById("fighter-player"), state.spriteTemporario.player1);
+
+        if (server.winner) {
+          els.turnInfo.textContent = `${server.winner === "p1" ? "Jogador 1" : "Jogador 2"} venceu!`;
+          return;
+        }
+
+        const jogadorDaVez = server.currentKey === "p1" ? "Jogador 1" : "Jogador 2";
+        const nomeDaVez = server.currentKey === "p1" ? server.p1.nome : server.p2.nome;
+        els.turnInfo.textContent = `Turno ${server.turno} • ${jogadorDaVez} (${nomeDaVez})`;
+      }
+
+      function montarAcoes() {
+        els.menu.innerHTML = "";
+        const server = state.serverState;
+
+        if (!server || !server.started || server.winner) {
+          return;
+        }
+
+        const acoes = (server.availableActions || []).map((acao) => ({
+          ...acao,
+          nome: acao.label,
+          nomeSprite: acao.skillName || acao.label,
+        }));
+
+        while (acoes.length < 4) {
+          acoes.push({ nome: "-", type: null });
+        }
+
+        acoes.slice(0, 4).forEach((acao) => {
+          const btn = document.createElement("button");
+          btn.textContent = acao.nome;
+
+          if (!acao.type) {
+            btn.disabled = true;
+          } else {
+            btn.addEventListener("click", () => processarAcaoComAnimacao(acao));
+          }
+
+          els.menu.appendChild(btn);
+        });
+      }
+
+      function obterChaveLado(chaveJogador) {
+        return chaveJogador === "p1" ? "player1" : "player2";
+      }
+
+      function obterSpriteAcaoPersonalizado(classe, nomeAcao) {
+        const mapaClasse = SPRITES_PERSONALIZADOS_ACAO[classe];
+        if (!mapaClasse) return null;
+        return mapaClasse[nomeAcao] || null;
+      }
+
+      function ehAnimacaoRoxoDuasFases(classe, nomeAcao) {
+        return classe === "gojo" && nomeAcao === "Vazio Roxo";
+      }
+
+      function setBotoesAcaoHabilitados(habilitado) {
+        Array.from(els.menu.querySelectorAll("button")).forEach((btn) => {
+          if (btn.textContent.trim() !== "-") {
+            btn.disabled = !habilitado;
+          }
+        });
+      }
+
+      function limparSpritesTemporarios() {
+        state.spriteTemporario.player1 = null;
+        state.spriteTemporario.player2 = null;
+      }
+
+      function obterElementoFighter(chaveJogador) {
+        if (chaveJogador === "p1") {
+          return document.getElementById("fighter-player");
+        }
+
+        if (chaveJogador === "p2") {
+          return document.getElementById("fighter-enemy");
+        }
+
+        return null;
+      }
+
+      function animarEsquiva(chaveJogador) {
+        const fighter = obterElementoFighter(chaveJogador);
+        if (!fighter) return;
+
+        fighter.classList.remove("dodge-anim");
+        void fighter.offsetWidth;
+        fighter.classList.add("dodge-anim");
+
+        setTimeout(() => {
+          fighter.classList.remove("dodge-anim");
+        }, 1200);
+      }
+
+      async function processarAcaoComAnimacao(acao) {
+        if (state.resolvendoAcao || !state.serverState || !state.serverState.started || state.serverState.winner) {
+          return;
+        }
+
+        const atacanteKey = state.serverState.currentKey;
+        const atacanteClasse = state.serverState[atacanteKey].classe;
+        const ladoAtacante = obterChaveLado(atacanteKey);
+        const spriteAcao = obterSpriteAcaoPersonalizado(atacanteClasse, acao.nomeSprite || acao.nome);
+
+        state.resolvendoAcao = true;
+        setBotoesAcaoHabilitados(false);
+
+        if (spriteAcao) {
+          state.spriteTemporario[ladoAtacante] = spriteAcao;
+        }
+
+        atualizarHUD();
+
+        if (ehAnimacaoRoxoDuasFases(atacanteClasse, acao.nomeSprite || acao.nome)) {
+          setTimeout(() => {
+            state.spriteTemporario[ladoAtacante] = GOJO_ROXO_FASE_2;
+            atualizarHUD();
+          }, ACTION_DELAY_MS / 2);
+        }
+
+        setTimeout(async () => {
+          try {
+            const resposta = await chamarApi("action", {
+              actionType: acao.type,
+              skillIndex: typeof acao.skillIndex === "number" ? acao.skillIndex : null,
+            });
+
+            limparSpritesTemporarios();
+
+            if (resposta.state) {
+              state.serverState = resposta.state;
+            }
+
+            const mensagem = resposta.message || "Ação executada.";
+            adicionarLog(mensagem);
+            atualizarHUD();
+
+            if (mensagem.includes("desviou!") && (acao.type === "attack" || acao.type === "skill")) {
+              animarEsquiva(atacanteKey === "p1" ? "p2" : "p1");
+            }
+          } catch (erro) {
+            limparSpritesTemporarios();
+            atualizarHUD();
+            adicionarLog(`Erro ao executar ação: ${erro.message || "falha desconhecida."}`);
+          } finally {
+            state.resolvendoAcao = false;
+            montarAcoes();
+            setBotoesAcaoHabilitados(true);
+          }
+        }, ACTION_DELAY_MS);
+      }
+
+      async function iniciar() {
+        if (window.location.protocol === "file:") {
+          adicionarLog("Abra pelo servidor PHP: http://127.0.0.1:8080/batalha.html");
+          return;
+        }
+
+        els.startBtn.disabled = true;
+
+        try {
+          const resposta = await chamarApi("start", {
+            p1Name: els.p1Name.value.trim() || "Jogador 1",
+            p1Class: els.p1Class.value,
+            p2Name: els.p2Name.value.trim() || "Jogador 2",
+            p2Class: els.p2Class.value,
+          });
+
+          if (!resposta.ok) {
+            adicionarLog(resposta.message || "Não foi possível iniciar a partida.");
+            return;
+          }
+
+          state.serverState = resposta.state;
+          state.resolvendoAcao = false;
+          limparSpritesTemporarios();
+
+          els.setupPanel.classList.add("hidden");
+          els.battleView.classList.remove("hidden");
+
+          els.log.innerHTML = "";
+          adicionarLog(`Partida iniciada: ${state.serverState.p1.classeNome} vs ${state.serverState.p2.classeNome}.`);
+          atualizarHUD();
+          montarAcoes();
+        } catch (erro) {
+          adicionarLog(`Erro ao iniciar: ${erro.message || "falha de conexão com a API."}`);
+          adicionarLog("Confirme se o servidor está rodando em http://127.0.0.1:8080");
+        } finally {
+          els.startBtn.disabled = false;
+        }
+      }
+
+      els.startBtn.addEventListener("click", iniciar);
+      adicionarLog("Configure os jogadores e clique em INICIAR BATALHA.");
+    })();
+  </script>
+</body>
+</html>
