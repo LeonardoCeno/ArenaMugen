@@ -53,7 +53,114 @@ class GameService {
             'p2' => $p2,
             'turno' => 1,
             'currentKey' => 'p1',
+            'skipTurns' => [
+                'p1' => 0,
+                'p2' => 0,
+            ],
+            'domain' => [
+                'turnsRemaining' => 0,
+                'casterKey' => null,
+                'targetKey' => null,
+                'extraCasterTurnPending' => false,
+            ],
         ];
+    }
+
+    private static function aplicarEfeitoInfinityVoid(array &$game, string $currentKey): void {
+        $targetKey = $currentKey === 'p1' ? 'p2' : 'p1';
+
+        $game['skipTurns'][$targetKey] = 2;
+        $game['domain'] = [
+            'turnsRemaining' => 3,
+            'casterKey' => $currentKey,
+            'targetKey' => $targetKey,
+            'extraCasterTurnPending' => true,
+        ];
+    }
+
+    private static function consumirTurnoDominioAoPular(array &$game, string $currentKey): void {
+        $domainTarget = (string)($game['domain']['targetKey'] ?? '');
+        $domainTurns = (int)($game['domain']['turnsRemaining'] ?? 0);
+
+        if ($domainTarget !== $currentKey || $domainTurns <= 0) {
+            return;
+        }
+
+        $novoValor = $domainTurns - 1;
+        $game['domain']['turnsRemaining'] = $novoValor;
+
+        if ($novoValor <= 0) {
+            $game['domain'] = [
+                'turnsRemaining' => 0,
+                'casterKey' => null,
+                'targetKey' => null,
+                'extraCasterTurnPending' => false,
+            ];
+        }
+    }
+
+    private static function consumirTurnoExtraDoCaster(array &$game, string $currentKey): void {
+        $domainTurns = (int)($game['domain']['turnsRemaining'] ?? 0);
+        $domainCaster = (string)($game['domain']['casterKey'] ?? '');
+        $domainTarget = (string)($game['domain']['targetKey'] ?? '');
+        $extraPendente = (bool)($game['domain']['extraCasterTurnPending'] ?? false);
+
+        if (!$extraPendente || $domainTurns <= 0 || $domainCaster !== $currentKey) {
+            return;
+        }
+
+        if ($domainTarget === '' || ((int)($game['skipTurns'][$domainTarget] ?? 0)) > 0) {
+            return;
+        }
+
+        $novoValor = $domainTurns - 1;
+        $game['domain']['turnsRemaining'] = $novoValor;
+        $game['domain']['extraCasterTurnPending'] = false;
+
+        if ($novoValor <= 0) {
+            $game['domain'] = [
+                'turnsRemaining' => 0,
+                'casterKey' => null,
+                'targetKey' => null,
+                'extraCasterTurnPending' => false,
+            ];
+        }
+    }
+
+    private static function processarTurnosPulados(array &$game): ?string {
+        $mensagens = [];
+        $limiteSeguranca = 0;
+
+        while (self::determineWinner($game) === null && $limiteSeguranca < 4) {
+            $currentKey = ($game['currentKey'] ?? 'p1') === 'p2' ? 'p2' : 'p1';
+            $skipAtual = (int)($game['skipTurns'][$currentKey] ?? 0);
+
+            if ($skipAtual <= 0) {
+                break;
+            }
+
+            /** @var Personagem $jogadorPulando */
+            $jogadorPulando = $currentKey === 'p1' ? $game['p1'] : $game['p2'];
+
+            $game['skipTurns'][$currentKey] = $skipAtual - 1;
+            self::consumirTurnoDominioAoPular($game, $currentKey);
+
+            $mensagens[] = $jogadorPulando->getNome() . ' teve o turno pulado por Infinity Void.';
+
+            $game['turno'] = ((int)$game['turno']) + 1;
+            $game['currentKey'] = $currentKey === 'p1' ? 'p2' : 'p1';
+
+            [, $nextCurrent] = self::getCurrentAndOpponent($game);
+            $nextCurrent->iniciarTurno();
+
+            $limiteSeguranca++;
+        }
+
+        if (count($mensagens) === 0) {
+            return null;
+        }
+
+        return implode(' ', $mensagens);
     }
 
     public static function determineWinner(array $game): ?string {
@@ -148,7 +255,22 @@ class GameService {
     public static function performTurn(array &$game, string $actionType, ?int $skillIndex = null): string {
         [$currentKey, $current, $opponent] = self::getCurrentAndOpponent($game);
 
+        $infinityVoidExecutado = false;
+        if ($actionType === 'skill' && $skillIndex !== null) {
+            $habilidades = $current->getHabilidades();
+            if (isset($habilidades[$skillIndex])) {
+                $metodo = (string)($habilidades[$skillIndex]['metodo'] ?? '');
+                $infinityVoidExecutado = $metodo === 'infinityVoid';
+            }
+        }
+
         $message = self::executeAction($current, $opponent, $actionType, $skillIndex);
+
+        if ($infinityVoidExecutado) {
+            self::aplicarEfeitoInfinityVoid($game, $currentKey);
+        }
+
+        self::consumirTurnoExtraDoCaster($game, $currentKey);
 
         if (self::determineWinner($game) === null) {
             $game['turno'] = ((int)$game['turno']) + 1;
@@ -156,6 +278,11 @@ class GameService {
 
             [, $nextCurrent] = self::getCurrentAndOpponent($game);
             $nextCurrent->iniciarTurno();
+
+            $mensagemTurnosPulados = self::processarTurnosPulados($game);
+            if ($mensagemTurnosPulados !== null) {
+                $message .= ' ' . $mensagemTurnosPulados;
+            }
         }
 
         return $message;
@@ -192,6 +319,8 @@ class GameService {
             'turno' => (int)$game['turno'],
             'currentKey' => $currentKey,
             'winner' => $winner,
+            'domainTurnsRemaining' => (int)($game['domain']['turnsRemaining'] ?? 0),
+            'domainCasterKey' => $game['domain']['casterKey'] ?? null,
             'p1' => self::exportCharacter($p1, 'Jogador 1'),
             'p2' => self::exportCharacter($p2, 'Jogador 2'),
             'availableActions' => $winner ? [] : self::buildAvailableActions($current),

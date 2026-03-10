@@ -5,6 +5,7 @@ require_once __DIR__ . '/../ExcecaoJogo.php';
 
 class Gojo extends Personagem {
 
+    const CUSTO_INFINITO = 80;
     const CUSTO_REVERSE = 60;
     const CUSTO_VAZIO_ROXO = 40;
     const CUSTO_AZUL = 25;
@@ -15,7 +16,7 @@ class Gojo extends Personagem {
     }
 
     public static function getDescricao(): string {
-        return "Gojo (HP alto, energia muito alta, habilidades: Azul, Vazio Roxo e Reverse Energy)";
+        return "Gojo (HP alto, energia muito alta, habilidades: Azul, Vazio Roxo, Reverse Energy e Infinity Void)";
     }
 
     public function vazioRoxo(Personagem $alvo): string {
@@ -71,6 +72,17 @@ class Gojo extends Personagem {
         return $this->formatarMensagemAcaoSemAlvo("Reverse Energy");
     }
 
+    public function infinityVoid(): string {
+
+        if ($this->energiaAtual < self::CUSTO_INFINITO) {
+            throw new EnergiaInsuficienteException();
+        }
+
+        $this->energiaAtual -= self::CUSTO_INFINITO;
+
+        return $this->formatarMensagemAcaoSemAlvo("Infinity Void");
+    }
+
     public function usarHabilidadeEspecial(Personagem $alvo): string {
         return $this->vazioRoxo($alvo);
     }
@@ -94,6 +106,12 @@ class Gojo extends Personagem {
             [
                 "nome" => "Reverse Energy",
                 "metodo" => "reverseEnergy",
+                "precisaAlvo" => false
+            ],
+
+            [
+                "nome" => "Infinity Void",
+                "metodo" => "infinityVoid",
                 "precisaAlvo" => false
             ]
 
@@ -141,6 +159,14 @@ class Gojo extends Personagem {
                         [
                             'sprite' => './gojopasta/gojoreversofinal.png',
                             'durationMs' => 1500,
+                        ],
+                    ],
+                ],
+                'Infinity Void' => [
+                    'frames' => [
+                        [
+                            'sprite' => './gojopasta/gojodomainfinal.png',
+                            'durationMs' => 2000,
                         ],
                     ],
                 ],

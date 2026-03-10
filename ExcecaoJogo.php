@@ -13,3 +13,9 @@ class EntradaInvalidaException extends ExcecaoJogo {
         parent::__construct("Entrada inválida. Escolha uma ação válida.");
     }
 }
+
+class AtaqueBloqueadoException extends ExcecaoJogo {
+    public function __construct() {
+        parent::__construct("Ataque bloqueado pelo Infinito. Use outra ação neste turno.");
+    }
+}
