@@ -168,6 +168,29 @@ body {
     radial-gradient(circle at 80% 10%, rgba(126, 214, 198, 0.16), transparent 30%);
 }
 
+.domain-cuts-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.domain-cut {
+  position: absolute;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45));
+  animation: domain-cut-flash 300ms ease-out forwards;
+}
+
+@keyframes domain-cut-flash {
+  0% { opacity: 0; }
+  20% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
 .card {
   position: absolute;
   width: 330px;

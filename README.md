@@ -30,19 +30,24 @@ Abra no navegador:
 ## Personagens
 
 ### Sukuna
-- Vida 120, Ataque 25, Defesa 10, Energia 80
+- Vida 200, Ataque 25, Defesa 10, Energia 4000
 - Habilidades:
-	- Desmantelar (aplica bleed por 2 turnos)
-	- Kamino Fuga (aplica burn por 1 turno)
+	- Desmantelar (bleed por 1 turno, custo: 250)
+	- Kamino Fuga (burn por 1 turno, custo: 800)
+	- Reverse Energy (cura 50, custo: 500)
+	- Domain (bleed por 4 turnos, custo: 1200)
+- Regeneração por turno: 70
 
 ### Gojo
 - Vida 200, Ataque 15, Defesa 5, Energia 1000
-- Habilidades: Azul, Vazio Roxo, Reverse Energy, Infinity Void
+- Habilidades: Azul (custo: 100), Vazio Roxo (custo: 200), Reverse Energy (custo: 150), Domain (custo: 300)
+- Regeneração por turno: 50
 
 ### Sans
 - Vida 1, Ataque 30, Defesa 1, Energia 200
-- Habilidades: Blaster, Parede de Ossos
+- Habilidades: Blaster (custo: 50), Parede de Ossos (custo: 40)
 - Regra especial: enquanto tiver energia, dano recebido é absorvido na energia
+- Regeneração por turno: 0
 
 ## Estrutura
 
@@ -52,8 +57,10 @@ Abra no navegador:
 - `web_api.php`: camada HTTP/JSON para o front-end
 - `index.php`: interface de terminal reutilizando `GameService.php`
 - `batalha.html` / `batalha.css` / `app.js`: interface web
+- `gojopasta/sprites` e `sukunapasta/sprites`: sprites e imagens de domínio usados no front-end
 
 ## Observações
 
 - As configurações visuais por personagem (sprite base e animações por ação) vêm das classes PHP e são enviadas pela API.
+- O domínio do Sukuna utiliza `sukunapasta/sprites/santuario.jpeg` como fundo e pode exibir cortes visuais aleatórios na arena no modo Web.
 - Para abrir o modo Web, use servidor local (`http://`), não `file://`.

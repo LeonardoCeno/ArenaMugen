@@ -1,6 +1,12 @@
 (function () {
 	const API_URL = "./web_api.php";
 	const ACOES_POR_PAGINA = 3;
+	const SPRITES_CORTES_DOMINIO_SUKUNA = [
+		"./sukunapasta/sprites/CORTE1.png",
+		"./sukunapasta/sprites/CORTE2.png",
+		"./sukunapasta/sprites/cortedomain1.png",
+		"./sukunapasta/sprites/cortedomain2.png",
+	];
 	const PLACEHOLDER_ACTIONS_HTML = `
 		<button disabled>ATACAR</button>
 		<button disabled>DEFENDER</button>
@@ -21,6 +27,8 @@
 			player1: null,
 			player2: null,
 		},
+		domainCutsIntervalId: null,
+		domainCutsTimeouts: [],
 	};
 
 	const fighterPlayerEl = document.getElementById("fighter-player");
@@ -231,6 +239,80 @@
 		});
 	}
 
+	function obterLayerCortesDominio() {
+		if (!els.arena) {
+			return null;
+		}
+
+		let layer = els.arena.querySelector(".domain-cuts-layer");
+		if (!layer) {
+			layer = document.createElement("div");
+			layer.className = "domain-cuts-layer";
+			els.arena.appendChild(layer);
+		}
+
+		return layer;
+	}
+
+	function limparCortesDominioSukuna() {
+		state.domainCutsTimeouts.forEach((timerId) => clearTimeout(timerId));
+		state.domainCutsTimeouts = [];
+
+		if (state.domainCutsIntervalId !== null) {
+			clearInterval(state.domainCutsIntervalId);
+			state.domainCutsIntervalId = null;
+		}
+
+		const layer = els.arena?.querySelector(".domain-cuts-layer");
+		if (layer) {
+			layer.innerHTML = "";
+		}
+	}
+
+	function criarCorteAleatorioDominioSukuna() {
+		const layer = obterLayerCortesDominio();
+		if (!layer || !SPRITES_CORTES_DOMINIO_SUKUNA.length) {
+			return;
+		}
+
+		const sprite = SPRITES_CORTES_DOMINIO_SUKUNA[Math.floor(Math.random() * SPRITES_CORTES_DOMINIO_SUKUNA.length)];
+		const corte = document.createElement("img");
+		corte.className = "domain-cut";
+		corte.src = sprite;
+		corte.alt = "";
+		corte.setAttribute("aria-hidden", "true");
+		corte.style.left = `${Math.random() * 100}%`;
+		corte.style.top = `${Math.random() * 100}%`;
+		corte.style.width = "500px";
+		corte.style.transform = `translate(-50%, -50%) rotate(${Math.floor(Math.random() * 360)}deg)`;
+		layer.appendChild(corte);
+
+		const timeoutId = setTimeout(() => {
+			corte.remove();
+		}, 260 + Math.floor(Math.random() * 240));
+
+		state.domainCutsTimeouts.push(timeoutId);
+	}
+
+	function atualizarEfeitoCortesDominioSukuna(ativo) {
+		if (!ativo) {
+			limparCortesDominioSukuna();
+			return;
+		}
+
+		if (state.domainCutsIntervalId !== null) {
+			return;
+		}
+
+		criarCorteAleatorioDominioSukuna();
+		state.domainCutsIntervalId = setInterval(() => {
+			const quantidade = 1 + Math.floor(Math.random() * 2);
+			for (let i = 0; i < quantidade; i++) {
+				criarCorteAleatorioDominioSukuna();
+			}
+		}, 30);
+	}
+
 	function aplicarVisualPersonagem(personagem, fighterRefs, spriteTemporario = null) {
 		if (!fighterRefs?.root || !fighterRefs.img) {
 			return;
@@ -314,6 +396,7 @@
 		if (!server || !server.started) {
 			els.arena.classList.remove("domain-active");
 			els.arena.classList.remove("sukuna-domain-active");
+			atualizarEfeitoCortesDominioSukuna(false);
 			els.winnerOverlay.classList.add("hidden");
 			return;
 		}
@@ -324,6 +407,7 @@
 
 		els.arena.classList.toggle("domain-active", dominioGojoAtivo);
 		els.arena.classList.toggle("sukuna-domain-active", previewSukunaAtivo);
+		atualizarEfeitoCortesDominioSukuna(previewSukunaAtivo);
 
 		atualizarCardStatus(server.p2, els.cards.enemy);
 		atualizarCardStatus(server.p1, els.cards.player);
@@ -648,6 +732,7 @@
 		state.actionPage = 0;
 		state.domainPreviewType = null;
 		limparTodosTimersAnimacao();
+		limparCortesDominioSukuna();
 		limparSpritesTemporarios();
 		esconderPreviewSkill();
 

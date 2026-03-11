@@ -6,7 +6,7 @@ require_once __DIR__ . '/../ExcecaoJogo.php';
 class Gojo extends Personagem {
 
     const CUSTO_INFINITO = 300;
-    const CUSTO_REVERSE = 100;
+    const CUSTO_REVERSE = 150;
     const CUSTO_VAZIO_ROXO = 200;
     const CUSTO_AZUL = 100;
     const REGENERACAO_PROPRIA = 50;
