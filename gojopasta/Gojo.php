@@ -16,7 +16,7 @@ class Gojo extends Personagem {
     }
 
     public static function getDescricao(): string {
-        return "Gojo (HP alto, energia muito alta, habilidades: Azul, Vazio Roxo, Reverse Energy e Infinity Void)";
+        return "Gojo (HP alto, energia muito alta, habilidades: Azul, Vazio Roxo, Reverse Energy e Domain)";
     }
 
     public function vazioRoxo(Personagem $alvo): string {
@@ -80,7 +80,7 @@ class Gojo extends Personagem {
 
         $this->energiaAtual -= self::CUSTO_INFINITO;
 
-        return $this->formatarMensagemAcaoSemAlvo("Infinity Void");
+        return $this->formatarMensagemAcaoSemAlvo("Domain");
     }
 
     public function usarHabilidadeEspecial(Personagem $alvo): string {
@@ -110,7 +110,7 @@ class Gojo extends Personagem {
             ],
 
             [
-                "nome" => "Infinity Void",
+                "nome" => "Domain",
                 "metodo" => "infinityVoid",
                 "precisaAlvo" => false
             ]
@@ -123,7 +123,7 @@ class Gojo extends Personagem {
             'Azul' => "Causa 2x o dano base após defesa: (ataque {$this->ataque} - defesa do alvo) x 2. Custo: " . self::CUSTO_AZUL . ' energia.',
             'Vazio Roxo' => "Causa {$this->ataque} x 5 = " . ($this->ataque * 5) . ' de dano e ignora defesa. Custo: ' . self::CUSTO_VAZIO_ROXO . ' energia.',
             'Reverse Energy' => 'Cura 50 de vida imediatamente. Custo: ' . self::CUSTO_REVERSE . ' energia.',
-            'Infinity Void' => 'Ativa domínio, aplica pulo de turnos no inimigo e altera o cenário temporariamente. Custo: ' . self::CUSTO_INFINITO . ' energia.',
+            'Domain' => 'Ativa domínio, aplica pulo de turnos no inimigo e altera o cenário temporariamente. Custo: ' . self::CUSTO_INFINITO . ' energia.',
         ]);
     }
 
@@ -171,7 +171,7 @@ class Gojo extends Personagem {
                         ],
                     ],
                 ],
-                'Infinity Void' => [
+                'Domain' => [
                     'frames' => [
                         [
                             'sprite' => './gojopasta/gojodomainfinal.png',

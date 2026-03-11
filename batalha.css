@@ -519,7 +519,7 @@ body {
   min-height: 95px;
   max-height: 95px;
   align-content: start;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .skill-preview h4 {
@@ -549,7 +549,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   align-content: start;
-  overflow: auto;
+  overflow: hidden;
   min-height: 0;
 }
 
@@ -567,7 +567,7 @@ body {
 }
 
 .grid-actions button:hover {
-  transform: translateY(-1px);
+  transform: none;
   border-color: #9ea9c7;
   background: linear-gradient(180deg, #394157, #2e3548);
 }

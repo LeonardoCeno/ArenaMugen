@@ -367,12 +367,17 @@
 		return obterFramesAnimacao(chaveJogador, "reactions", "defendingHit");
 	}
 
-	function obterTipoPreviewDominio(nomeAcao) {
-		if (nomeAcao === "Infinity Void") {
+	function obterTipoPreviewDominio(chaveJogador, nomeAcao) {
+		if (nomeAcao !== "Domain") {
+			return null;
+		}
+
+		const classe = (state.serverState?.[chaveJogador]?.classe || "").toLowerCase();
+		if (classe === "gojo") {
 			return "gojo";
 		}
 
-		if (nomeAcao === "Santuario Malevolente") {
+		if (classe === "sukuna") {
 			return "sukuna";
 		}
 
@@ -506,7 +511,7 @@
 		const ladoAtacante = obterChaveLado(atacanteKey);
 		const ladoDefensor = obterChaveLado(defensorKey);
 		const nomeAcao = acao.nomeSprite || acao.nome;
-		const tipoPreviewDominio = obterTipoPreviewDominio(nomeAcao);
+		const tipoPreviewDominio = obterTipoPreviewDominio(atacanteKey, nomeAcao);
 		const framesAnimacao = obterFramesAnimacaoAcao(atacanteKey, nomeAcao);
 		const defensorEstaDefendendo = state.serverState[defensorKey]?.defendendo === true;
 		const framesReacaoDefesa = acao.targetsOpponent && defensorEstaDefendendo

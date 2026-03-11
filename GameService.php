@@ -143,7 +143,7 @@ class GameService {
             $game['skipTurns'][$currentKey] = $skipAtual - 1;
             self::consumirTurnoDominioAoPular($game, $currentKey);
 
-            $mensagens[] = $jogadorPulando->getNome() . ' teve o turno pulado por Infinity Void.';
+            $mensagens[] = $jogadorPulando->getNome() . ' teve o turno pulado por Domain.';
 
             $game['turno'] = ((int)$game['turno']) + 1;
             $game['currentKey'] = $currentKey === 'p1' ? 'p2' : 'p1';

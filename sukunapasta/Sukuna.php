@@ -12,7 +12,7 @@ class Sukuna extends Personagem {
     }
 
     public static function getDescricao(): string {
-        return "Sukuna (Alto HP, ataque médio, habilidades: Desmantelar, Kamino Fuga, Reverse Energy e Santuario Malevolente)";
+        return "Sukuna (Alto HP, ataque médio, habilidades: Desmantelar, Kamino Fuga, Reverse Energy e Domain)";
     }
 
     public function usarHabilidadeEspecial(Personagem $alvo): string {
@@ -82,7 +82,7 @@ class Sukuna extends Personagem {
 
     public function santuarioMalevolente(Personagem $alvo): string {
         if ($alvo->tentouDesviarAtaque()) {
-            return "{$this->nome} usou Santuario Malevolente em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
+            return "{$this->nome} usou Domain em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
         }
 
         $vidaAntes = $alvo->getVidaAtual();
@@ -94,7 +94,7 @@ class Sukuna extends Personagem {
             $alvo->aplicarSangramento($danoBleed, 4);
         }
 
-        $mensagem = $this->formatarMensagemAcaoComAlvo("Santuario Malevolente", $alvo, $vidaAntes, $danoReal);
+        $mensagem = $this->formatarMensagemAcaoComAlvo("Domain", $alvo, $vidaAntes, $danoReal);
 
         if ($danoBleed > 0) {
             $mensagem .= " Sangramento aplicado por 4 turnos ({$danoBleed} por turno).";
@@ -121,7 +121,7 @@ class Sukuna extends Personagem {
                 "precisaAlvo" => false
             ],
             [
-                "nome" => "Santuario Malevolente",
+                "nome" => "Domain",
                 "metodo" => "santuarioMalevolente",
                 "precisaAlvo" => true
             ]
@@ -133,7 +133,81 @@ class Sukuna extends Personagem {
             'Desmantelar' => "Causa dano base: ataque {$this->ataque} - defesa do alvo. Aplica bleed por 1 turno com 40% do dano causado por turno.",
             'Kamino Fuga' => "Causa dano base: ataque {$this->ataque} - defesa do alvo. Aplica burn por 1 turno com 20% do dano causado por turno.",
             'Reverse Energy' => 'Cura 50 de vida imediatamente. Custo: ' . self::CUSTO_REVERSE . ' energia.',
-            'Santuario Malevolente' => "Causa dano base: ataque {$this->ataque} - defesa do alvo. Aplica bleed por 4 turnos com 50% do dano causado por turno.",
+            'Domain' => "Causa dano base: ataque {$this->ataque} - defesa do alvo. Aplica bleed por 4 turnos com 50% do dano causado por turno.",
         ]);
+    }
+
+    public function getConfiguracaoVisual(): array {
+        return [
+            'baseSprite' => './sukunapasta/sukunabasefinal.png',
+            'actions' => [
+                'Ataque' => [
+                    'frames' => [
+                        [
+                            'sprite' => './sukunapasta/sukuachute1.png',
+                            'durationMs' => 400,
+                        ],
+                        [
+                            'sprite' => './sukunapasta/sukunachute2real.png',
+                            'durationMs' => 400,
+                        ],
+                    ],
+                ],
+                'Desmantelar' => [
+                    'frames' => [
+                        [
+                            'sprite' => './sukunapasta/sukuacleave.png',
+                            'durationMs' => 1000,
+                        ],
+                    ],
+                    'overlays' => [
+                        [
+                            'target' => 'opponent',
+                            'sprite' => './sukunapasta/CORTE1.png',
+                            'startMs' => 0,
+                            'durationMs' => 1000,
+                        ],
+                        [
+                            'target' => 'opponent',
+                            'sprite' => './sukunapasta/CORTE2.png',
+                            'startMs' => 1000,
+                            'durationMs' => 1000,
+                        ],
+                    ],
+                ],
+                'Kamino Fuga' => [
+                    'frames' => [
+                        [
+                            'sprite' => './sukunapasta/sukunafuga1.png',
+                            'durationMs' => 300,
+                        ],
+                        [
+                            'sprite' => './sukunapasta/sukunafuga2.png',
+                            'durationMs' => 300,
+                        ],
+                        [
+                            'sprite' => './sukunapasta/FUGAFINAL.png',
+                            'durationMs' => 1200,
+                        ],
+                    ],
+                ],
+                'Reverse Energy' => [
+                    'frames' => [
+                        [
+                            'sprite' => './sukunapasta/REALSUKUNAREGEN.png',
+                            'durationMs' => 1500,
+                        ],
+                    ],
+                ],
+                'Domain' => [
+                    'frames' => [
+                        [
+                            'sprite' => './sukunapasta/DOMAINSUKUNA.png',
+                            'durationMs' => 2000,
+                        ],
+                    ],
+                ],
+            ],
+        ];
     }
 }
