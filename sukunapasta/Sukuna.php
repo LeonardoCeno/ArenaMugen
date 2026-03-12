@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/../Personagem.php';
-require_once __DIR__ . '/../ExcecaoJogo.php';
 
 class Sukuna extends Personagem {
 
@@ -20,26 +19,20 @@ class Sukuna extends Personagem {
     }
 
     public function usarHabilidadeEspecial(Personagem $alvo): string {
-        if ($this->energiaAtual < self::CUSTO_DESMANTELAR) {
-            throw new EnergiaInsuficienteException();
-        }
-
-        $this->energiaAtual -= self::CUSTO_DESMANTELAR;
-
-        if ($alvo->tentouDesviarAtaque()) {
-            return "{$this->nome} usou Desmantelar em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
-        }
-
-        $vidaAntes = $alvo->getVidaAtual();
+        $this->consumirEnergia(self::CUSTO_DESMANTELAR);
         $danoReal = (int) ceil(max(0, $this->ataque) * 1.5);
-        $alvo->receberDano($danoReal);
+        $resultado = $this->executarAtaqueDireto($alvo, "Desmantelar", $danoReal);
+
+        if (!$resultado['acertou']) {
+            return $resultado['mensagem'];
+        }
 
         $danoBleed = (int) ceil($danoReal * 0.40);
         if ($danoBleed > 0) {
-            $alvo->aplicarSangramento($danoBleed, 1);
+            $alvo->aplicarSangramento($danoBleed, 2);
         }
 
-        $mensagem = $this->formatarMensagemAcaoComAlvo("Desmantelar", $alvo, $vidaAntes, $danoReal);
+        $mensagem = $resultado['mensagem'];
 
         if ($danoBleed > 0) {
             $mensagem .= " Sangramento aplicado por 2 turnos ({$danoBleed} por turno).";
@@ -49,26 +42,20 @@ class Sukuna extends Personagem {
     }
 
     public function kaminoFuga(Personagem $alvo): string {
-        if ($this->energiaAtual < self::CUSTO_KAMINO_FUGA) {
-            throw new EnergiaInsuficienteException();
-        }
-
-        $this->energiaAtual -= self::CUSTO_KAMINO_FUGA;
-
-        if ($alvo->tentouDesviarAtaque()) {
-            return "{$this->nome} usou Kamino Fuga em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
-        }
-
-        $vidaAntes = $alvo->getVidaAtual();
+        $this->consumirEnergia(self::CUSTO_KAMINO_FUGA);
         $danoReal = (int) ceil(max(0, $this->ataque) * 2);
-        $alvo->receberDano($danoReal);
+        $resultado = $this->executarAtaqueDireto($alvo, "Kamino Fuga", $danoReal);
+
+        if (!$resultado['acertou']) {
+            return $resultado['mensagem'];
+        }
 
         $danoBurn = (int) ceil($danoReal * 0.40);
         if ($danoBurn > 0) {
             $alvo->aplicarQueimadura($danoBurn, 1);
         }
 
-        $mensagem = $this->formatarMensagemAcaoComAlvo("Kamino Fuga", $alvo, $vidaAntes, $danoReal);
+        $mensagem = $resultado['mensagem'];
 
         if ($danoBurn > 0) {
             $mensagem .= " Burn aplicado por 1 turno ({$danoBurn} por turno).";
@@ -78,45 +65,27 @@ class Sukuna extends Personagem {
     }
 
     public function reverseEnergy(): string {
-
-        if ($this->energiaAtual < self::CUSTO_REVERSE) {
-            throw new EnergiaInsuficienteException();
-        }
-
-        $this->energiaAtual -= self::CUSTO_REVERSE;
-
-        $cura = 50;
-
-        $this->vidaAtual += $cura;
-
-        if ($this->vidaAtual > $this->vidaMaxima) {
-            $this->vidaAtual = $this->vidaMaxima;
-        }
+        $this->consumirEnergia(self::CUSTO_REVERSE);
+        $this->curarVida(50);
 
         return $this->formatarMensagemAcaoSemAlvo("Reverse Energy");
     }
 
     public function santuarioMalevolente(Personagem $alvo): string {
-        if ($this->energiaAtual < self::CUSTO_DOMAIN) {
-            throw new EnergiaInsuficienteException();
+        $this->consumirEnergia(self::CUSTO_DOMAIN);
+        $danoReal = 70;
+        $resultado = $this->executarAtaqueDireto($alvo, "Domain", $danoReal);
+
+        if (!$resultado['acertou']) {
+            return $resultado['mensagem'];
         }
-
-        $this->energiaAtual -= self::CUSTO_DOMAIN;
-
-        if ($alvo->tentouDesviarAtaque()) {
-            return "{$this->nome} usou Domain em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
-        }
-
-        $vidaAntes = $alvo->getVidaAtual();
-        $danoReal = 90;
-        $alvo->receberDano($danoReal);
 
         $danoBleed = (int) ceil($danoReal * 0.50);
         if ($danoBleed > 0) {
-            $alvo->aplicarSangramento($danoBleed, 3);
+            $alvo->aplicarSangramento($danoBleed, 4);
         }
 
-        $mensagem = $this->formatarMensagemAcaoComAlvo("Domain", $alvo, $vidaAntes, $danoReal);
+        $mensagem = $resultado['mensagem'];
 
         if ($danoBleed > 0) {
             $mensagem .= " Sangramento aplicado por 4 turnos ({$danoBleed} por turno).";
@@ -152,10 +121,10 @@ class Sukuna extends Personagem {
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'Desmantelar' => "Causa 1.5x o dano base: {$this->ataque} x 1.5 = " . ((int) ceil(max(0, $this->ataque) * 1.5)) . '. Aplica bleed por 1 turno com 40% do dano causado por turno. Custo: ' . self::CUSTO_DESMANTELAR . ' energia.',
-            'Kamino Fuga' => "Causa 2x o dano base: {$this->ataque} x 2 = " . ((int) ceil(max(0, $this->ataque) * 2)) . '. Aplica burn por 1 turno com 20% do dano causado por turno. Custo: ' . self::CUSTO_KAMINO_FUGA . ' energia.',
-            'Reverse Energy' => 'Cura 50 de vida imediatamente. Custo: ' . self::CUSTO_REVERSE . ' energia.',
-            'Domain' => 'Causa 90 de dano fixo. Aplica bleed por 4 turnos com 50% do dano causado por turno. Custo: ' . self::CUSTO_DOMAIN . ' energia.',
+            'Desmantelar' => 'Causa 38 de dano. Bleed: 16 por turno por 2 turnos. Custo: ' . self::CUSTO_DESMANTELAR . ' energia.',
+            'Kamino Fuga' => 'Causa 50 de dano. Burn: 20 por turno por 1 turno. Custo: ' . self::CUSTO_KAMINO_FUGA . ' energia.',
+            'Reverse Energy' => 'Cura 50 de vida. Custo: ' . self::CUSTO_REVERSE . ' energia.',
+            'Domain' => 'Causa 70 de dano. Bleed: por 4 turnos. Custo: ' . self::CUSTO_DOMAIN . ' energia.',
         ]);
     }
 
@@ -256,7 +225,7 @@ class Sukuna extends Personagem {
                             'target' => 'opponent',
                             'sprite' => './sukunapasta/sprites/FUGA.png',
                             'startMs' => 2200,
-                            'durationMs' => 900,
+                            'durationMs' => 500,
                             'sizePx' => 280,
                             'frontOffsetPx' => 130,
                             'projectileAngleDeg' => -15,

@@ -205,6 +205,13 @@ body {
     0 0 24px rgba(12, 70, 34, 0.62);
 }
 
+.arena-energy-beam-pink {
+  background: linear-gradient(90deg, rgba(255, 88, 189, 0.96), rgba(255, 179, 227, 0.82));
+  box-shadow:
+    0 0 12px rgba(255, 79, 182, 0.92),
+    0 0 24px rgba(255, 79, 182, 0.62);
+}
+
 .domain-cut {
   position: absolute;
   height: auto;
@@ -360,6 +367,8 @@ body {
 
 .fighter {
   position: absolute;
+  --fighter-flip: 1;
+  --fighter-scale: 1;
   width: 306px;
   height: 306px;
   border-radius: 0;
@@ -405,6 +414,8 @@ body {
   object-position: center bottom;
   border-radius: 0;
   background: transparent;
+  transform-origin: center bottom;
+  transform: scaleX(var(--fighter-flip)) scale(var(--fighter-scale));
 }
 
 .fighter-action-overlay {
@@ -426,26 +437,20 @@ body {
   display: none;
 }
 
-.fighter.is-flipped .fighter-img {
-  transform: scaleX(-1);
+.fighter.is-flipped {
+  --fighter-flip: -1;
 }
 
-.fighter.true-cero-sized .fighter-img {
-  transform: scale(1.4);
-  transform-origin: center bottom;
+.fighter.true-cero-sized {
+  --fighter-scale: 1.4;
 }
 
-.fighter.is-flipped.true-cero-sized .fighter-img {
-  transform: scaleX(-1) scale(1.4);
+.fighter.true-cero-plus-sized {
+  --fighter-scale: 1.5;
 }
 
-.fighter.true-cero-plus-sized .fighter-img {
-  transform: scale(1.5);
-  transform-origin: center bottom;
-}
-
-.fighter.is-flipped.true-cero-plus-sized .fighter-img {
-  transform: scaleX(-1) scale(1.5);
+.fighter.ubuntu-base-smaller {
+  --fighter-scale: 0.75;
 }
 
 .fighter.dodge-anim {

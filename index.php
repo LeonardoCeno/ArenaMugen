@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/GameService.php';
-require_once __DIR__ . '/ExcecaoJogo.php';
 
 function limparTela(): void {
     system('clear');

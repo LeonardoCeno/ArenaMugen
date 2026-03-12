@@ -7,9 +7,44 @@ require_once __DIR__ . '/sukunapasta/Sukuna.php';
 require_once __DIR__ . '/gojopasta/Gojo.php';
 require_once __DIR__ . '/sanspasta/Sans.php';
 require_once __DIR__ . '/ulquiorrapasta/ulquiorra.php';
-require_once __DIR__ . '/ExcecaoJogo.php';
+require_once __DIR__ . '/mikupasta/miku.php';
+require_once __DIR__ . '/ubuntupasta/ubuntu.php';
+require_once __DIR__ . '/ubuntukiller/ubuntukiller.php';
 
 class GameService {
+    private static function normalizarChaveJogador(?string $key): string {
+        return $key === 'p2' ? 'p2' : 'p1';
+    }
+
+    private static function obterJogadorPorChave(array $game, string $key): Personagem {
+        $chaveNormalizada = self::normalizarChaveJogador($key);
+
+        return $chaveNormalizada === 'p1' ? $game['p1'] : $game['p2'];
+    }
+
+    private static function obterMetodoSkill(Personagem $current, ?int $skillIndex): ?string {
+        if ($skillIndex === null) {
+            return null;
+        }
+
+        $habilidades = $current->getHabilidades();
+        if (!isset($habilidades[$skillIndex])) {
+            return null;
+        }
+
+        $metodo = (string)($habilidades[$skillIndex]['metodo'] ?? '');
+
+        return $metodo !== '' ? $metodo : null;
+    }
+
+    private static function avancarParaProximoTurno(array &$game, string $currentKey): void {
+        $game['turno'] = ((int)$game['turno']) + 1;
+        $game['currentKey'] = $currentKey === 'p1' ? 'p2' : 'p1';
+
+        [, $nextCurrent] = self::getCurrentAndOpponent($game);
+        $nextCurrent->iniciarTurno();
+    }
+
     private static function getDomainVazio(): array {
         return [
             'turnsRemaining' => 0,
@@ -29,6 +64,9 @@ class GameService {
             'gojo' => Gojo::class,
             'sans' => Sans::class,
             'ulquiorra' => Ulquiorra::class,
+            'miku' => Miku::class,
+            'ubuntu' => Ubuntu::class,
+            'ubuntukiller' => UbuntuKiller::class,
         ];
     }
 
@@ -132,26 +170,21 @@ class GameService {
         $limiteSeguranca = 0;
 
         while (self::determineWinner($game) === null && $limiteSeguranca < 4) {
-            $currentKey = ($game['currentKey'] ?? 'p1') === 'p2' ? 'p2' : 'p1';
+            $currentKey = self::normalizarChaveJogador((string)($game['currentKey'] ?? 'p1'));
             $skipAtual = (int)($game['skipTurns'][$currentKey] ?? 0);
 
             if ($skipAtual <= 0) {
                 break;
             }
 
-            /** @var Personagem $jogadorPulando */
-            $jogadorPulando = $currentKey === 'p1' ? $game['p1'] : $game['p2'];
+            $jogadorPulando = self::obterJogadorPorChave($game, $currentKey);
 
             $game['skipTurns'][$currentKey] = $skipAtual - 1;
             self::consumirTurnoDominioAoPular($game, $currentKey);
 
             $mensagens[] = $jogadorPulando->getNome() . ' teve o turno pulado por Domain.';
 
-            $game['turno'] = ((int)$game['turno']) + 1;
-            $game['currentKey'] = $currentKey === 'p1' ? 'p2' : 'p1';
-
-            [, $nextCurrent] = self::getCurrentAndOpponent($game);
-            $nextCurrent->iniciarTurno();
+            self::avancarParaProximoTurno($game, $currentKey);
 
             $limiteSeguranca++;
         }
@@ -164,10 +197,8 @@ class GameService {
     }
 
     public static function determineWinner(array $game): ?string {
-        /** @var Personagem $p1 */
-        $p1 = $game['p1'];
-        /** @var Personagem $p2 */
-        $p2 = $game['p2'];
+        $p1 = self::obterJogadorPorChave($game, 'p1');
+        $p2 = self::obterJogadorPorChave($game, 'p2');
 
         if (!$p1->estaVivo()) {
             return 'p2';
@@ -181,20 +212,34 @@ class GameService {
     }
 
     public static function getCurrentAndOpponent(array $game): array {
-        /** @var Personagem $p1 */
-        $p1 = $game['p1'];
-        /** @var Personagem $p2 */
-        $p2 = $game['p2'];
-
-        $currentKey = ($game['currentKey'] ?? 'p1') === 'p2' ? 'p2' : 'p1';
-        $current = $currentKey === 'p1' ? $p1 : $p2;
-        $opponent = $currentKey === 'p1' ? $p2 : $p1;
+        $currentKey = self::normalizarChaveJogador((string)($game['currentKey'] ?? 'p1'));
+        $opponentKey = $currentKey === 'p1' ? 'p2' : 'p1';
+        $current = self::obterJogadorPorChave($game, $currentKey);
+        $opponent = self::obterJogadorPorChave($game, $opponentKey);
 
         return [$currentKey, $current, $opponent];
     }
 
     public static function buildAvailableActions(Personagem $current): array {
         $descricoes = $current->getDescricoesAcoes();
+
+        if ($current instanceof Ubuntu) {
+            $actions = [];
+
+            foreach ($current->getHabilidades() as $index => $habilidade) {
+                $targetsOpponent = (bool)$habilidade['precisaAlvo'];
+                $actions[] = [
+                    'type' => 'skill',
+                    'label' => strtoupper((string)$habilidade['nome']),
+                    'skillName' => (string)$habilidade['nome'],
+                    'description' => (string)($descricoes[(string)$habilidade['nome']] ?? ''),
+                    'skillIndex' => $index,
+                    'targetsOpponent' => $targetsOpponent,
+                ];
+            }
+
+            return $actions;
+        }
 
         $actions = [
             [
@@ -226,6 +271,22 @@ class GameService {
         }
 
         return $actions;
+    }
+
+    public static function deveRetornarParaSetupPorErro(array $game, string $actionType, ?int $skillIndex = null): bool {
+        if ($actionType !== 'skill') {
+            return false;
+        }
+
+        [, $current] = self::getCurrentAndOpponent($game);
+
+        if (!$current instanceof Ubuntu) {
+            return false;
+        }
+
+        $metodoSkill = self::obterMetodoSkill($current, $skillIndex);
+
+        return $metodoSkill === 'erro';
     }
 
     public static function executeAction(Personagem $current, Personagem $opponent, string $actionType, ?int $skillIndex = null): string {
@@ -260,14 +321,8 @@ class GameService {
     public static function performTurn(array &$game, string $actionType, ?int $skillIndex = null): string {
         [$currentKey, $current, $opponent] = self::getCurrentAndOpponent($game);
 
-        $infinityVoidExecutado = false;
-        if ($actionType === 'skill' && $skillIndex !== null) {
-            $habilidades = $current->getHabilidades();
-            if (isset($habilidades[$skillIndex])) {
-                $metodo = (string)($habilidades[$skillIndex]['metodo'] ?? '');
-                $infinityVoidExecutado = $metodo === 'infinityVoid';
-            }
-        }
+        $metodoSkill = $actionType === 'skill' ? self::obterMetodoSkill($current, $skillIndex) : null;
+        $infinityVoidExecutado = $metodoSkill === 'infinityVoid';
 
         $message = self::executeAction($current, $opponent, $actionType, $skillIndex);
 
@@ -279,11 +334,7 @@ class GameService {
         $current->processarEfeitosContinuosFimTurno();
 
         if (self::determineWinner($game) === null) {
-            $game['turno'] = ((int)$game['turno']) + 1;
-            $game['currentKey'] = $currentKey === 'p1' ? 'p2' : 'p1';
-
-            [, $nextCurrent] = self::getCurrentAndOpponent($game);
-            $nextCurrent->iniciarTurno();
+            self::avancarParaProximoTurno($game, $currentKey);
 
             $mensagemTurnosPulados = self::processarTurnosPulados($game);
             if ($mensagemTurnosPulados !== null) {

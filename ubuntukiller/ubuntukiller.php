@@ -2,19 +2,17 @@
 
 require_once __DIR__ . '/../Personagem.php';
 
-class Sans extends Personagem {
+class UbuntuKiller extends Personagem {
 
-    const CUSTO_EEEEH = 0;
-    const DANO_EEEEH = 999;
+    const DANO_UBUNTUBUXA = 999;
     const REGENERACAO_PROPRIA = 0;
 
     public function __construct(string $nome) {
-        parent::__construct($nome, 1, 1, 200);
+        parent::__construct($nome, 500, 100, 1000);
     }
 
     public static function getDescricao(): string {
-
-        return "Sans (HP baixíssimo, ataque alto, passiva: esquiva usando energia, habilidade: eeeeh)";
+        return 'UbuntuKiller (habilidade única: ubuntubuxa)';
     }
 
     public function receberDano(int $danoReal): void {
@@ -44,44 +42,46 @@ class Sans extends Personagem {
         }
     }
 
-    public function eeeeh(Personagem $alvo): string {
-        $this->consumirEnergia(self::CUSTO_EEEEH);
-        $resultado = $this->executarAtaqueDireto($alvo, "eeeeh", self::DANO_EEEEH);
+    public function ubuntubuxa(Personagem $alvo): string {
+        $resultado = $this->executarAtaqueDireto($alvo, 'ubuntubuxa', self::DANO_UBUNTUBUXA);
 
         return $resultado['mensagem'];
     }
 
     public function usarHabilidadeEspecial(Personagem $alvo): string {
-        return $this->eeeeh($alvo);
+        return $this->ubuntubuxa($alvo);
     }
 
     public function getHabilidades(): array {
-
         return [
             [
-                "nome" => "eeeeh",
-                "metodo" => "eeeeh",
-                "precisaAlvo" => true
-            ]
+                'nome' => 'ubuntubuxa',
+                'metodo' => 'ubuntubuxa',
+                'precisaAlvo' => true,
+            ],
         ];
     }
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'eeeeh' => 'Causa 999 de dano fixo. Custo: ' . self::CUSTO_EEEEH . ' energia.',
+            'ubuntubuxa' => 'Causa 999 de dano.',
         ]);
     }
 
     public function getConfiguracaoVisual(): array {
         return [
-            'baseSprite' => './sanspasta/sprites/SANSBASEFINAL.png',
-            'winImage' => './sanspasta/sprites/sansrealista.jpg',
+            'baseSprite' => './ubuntukiller/sprites/UBUNTUKILLER.png',
+            'winImage' => './ubuntukiller/sprites/EUWIN.png',
             'actions' => [
-                'eeeeh' => [
+                'ubuntubuxa' => [
                     'frames' => [
                         [
-                            'sprite' => './sanspasta/sprites/SANSKILL1FINAL.png',
-                            'durationMs' => 1000,
+                            'sprite' => './ubuntukiller/sprites/FOGO.png',
+                            'durationMs' => 1800,
+                        ],
+                        [
+                            'sprite' => './ubuntukiller/sprites/TIRO.png',
+                            'durationMs' => 1100,
                         ],
                     ],
                 ],

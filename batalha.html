@@ -27,6 +27,9 @@
               <option value="gojo">Gojo</option>
               <option value="sans">Sans</option>
               <option value="ulquiorra">Ulquiorra</option>
+              <option value="miku">Miku</option>
+              <option value="ubuntu">Ubuntu</option>
+              <option value="ubuntukiller">UbuntuKiller</option>
             </select>
           </div>
 
@@ -38,6 +41,9 @@
               <option value="gojo" selected>Gojo</option>
               <option value="sans">Sans</option>
               <option value="ulquiorra">Ulquiorra</option>
+              <option value="miku">Miku</option>
+              <option value="ubuntu">Ubuntu</option>
+              <option value="ubuntukiller">UbuntuKiller</option>
             </select>
           </div>
         </div>
@@ -47,10 +53,10 @@
     </section>
 
     <section class="battle-view hidden" id="battle-view">
-    <section class="arena" aria-label="Campo de batalha">
-      <div class="arena-glow"></div>
+      <div class="arena" aria-label="Campo de batalha">
+        <div class="arena-glow"></div>
 
-      <article class="card card-enemy" id="card-enemy">
+        <article class="card card-enemy" id="card-enemy">
         <div class="card-head">
           <h2 id="enemy-name">-</h2>
           <span id="enemy-tag">Jogador 2</span>
@@ -71,9 +77,9 @@
           </div>
           <strong id="enemy-energy-text">0 / 0</strong>
         </div>
-      </article>
+        </article>
 
-      <article class="card card-player" id="card-player">
+        <article class="card card-player" id="card-player">
         <div class="card-head">
           <h2 id="player-name">-</h2>
           <span id="player-tag">Jogador 1</span>
@@ -94,47 +100,47 @@
           </div>
           <strong id="player-energy-text">0 / 0</strong>
         </div>
-      </article>
+        </article>
 
-      <div class="fighter enemy" id="fighter-enemy" data-side="player2" aria-hidden="true">
-        <img class="fighter-img" alt="Personagem do jogador 2" />
-        <span>G</span>
-      </div>
-
-      <div class="fighter player" id="fighter-player" data-side="player1" aria-hidden="true">
-        <img class="fighter-img" alt="Personagem do jogador 1" />
-        <span>S</span>
-      </div>
-
-      <div class="winner-overlay hidden" id="winner-overlay" aria-live="polite">
-        <div class="winner-card">
-          <img id="winner-sprite" class="winner-sprite" alt="Vencedor" />
-          <p id="winner-text" class="winner-text">Jogador venceu!</p>
-          <button id="play-again-btn" class="play-again-btn">JOGAR NOVAMENTE</button>
+        <div class="fighter enemy" id="fighter-enemy" data-side="player2" aria-hidden="true">
+          <img class="fighter-img" alt="Personagem do jogador 2" />
+          <span>G</span>
         </div>
-      </div>
-    </section>
 
-    <section class="hud">
-      <div class="feed" id="combat-feed">
-        <h3>LOG DE COMBATE</h3>
-        <ul id="battle-log"></ul>
-        <div class="skill-preview" id="skill-preview" aria-live="polite">
-          <h4 id="skill-preview-title">Habilidade</h4>
-          <p id="skill-preview-text">Passe o mouse em uma habilidade para ver a descrição.</p>
+        <div class="fighter player" id="fighter-player" data-side="player1" aria-hidden="true">
+          <img class="fighter-img" alt="Personagem do jogador 1" />
+          <span>S</span>
+        </div>
+
+        <div class="winner-overlay hidden" id="winner-overlay" aria-live="polite">
+          <div class="winner-card">
+            <img id="winner-sprite" class="winner-sprite" alt="Vencedor" />
+            <p id="winner-text" class="winner-text">Jogador venceu!</p>
+            <button id="play-again-btn" class="play-again-btn">JOGAR NOVAMENTE</button>
+          </div>
         </div>
       </div>
 
-      <aside class="controls" aria-label="Ações disponíveis">
-        <h3>AÇÕES</h3>
-        <div class="grid-actions" id="action-menu">
-          <button disabled>ATACAR</button>
-          <button disabled>DEFENDER</button>
-          <button disabled>HABILIDADE 1</button>
-          <button disabled>HABILIDADE 2</button>
+      <section class="hud">
+        <div class="feed" id="combat-feed">
+          <h3>LOG DE COMBATE</h3>
+          <ul id="battle-log"></ul>
+          <div class="skill-preview" id="skill-preview" aria-live="polite">
+            <h4 id="skill-preview-title">Habilidade</h4>
+            <p id="skill-preview-text">Passe o mouse em uma habilidade para ver a descrição.</p>
+          </div>
         </div>
-      </aside>
-    </section>
+
+        <aside class="controls" aria-label="Ações disponíveis">
+          <h3>AÇÕES</h3>
+          <div class="grid-actions" id="action-menu">
+            <button disabled>ATACAR</button>
+            <button disabled>DEFENDER</button>
+            <button disabled>HABILIDADE 1</button>
+            <button disabled>HABILIDADE 2</button>
+          </div>
+        </aside>
+      </section>
     </section>
   </main>
 

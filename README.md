@@ -32,7 +32,7 @@ Abra no navegador:
 ### Sukuna
 - Vida 200, Ataque 25, Energia 4000
 - Habilidades:
-	- Desmantelar (bleed por 1 turno, custo: 250)
+	- Desmantelar (bleed por 2 turnos, custo: 250)
 	- Kamino Fuga (burn por 1 turno, custo: 800)
 	- Reverse Energy (cura 50, custo: 500)
 	- Domain (bleed por 4 turnos, custo: 1200)
@@ -44,10 +44,19 @@ Abra no navegador:
 - Regeneração por turno: 50
 
 ### Sans
-- Vida 1, Ataque 30, Energia 200
-- Habilidades: Blaster (custo: 50), Parede de Ossos (custo: 40)
+- Vida 1, Ataque 1, Energia 0
+- Habilidade: eeeeh (999 de dano fixo, custo: 0)
 - Regra especial: enquanto tiver energia, dano recebido é absorvido na energia
 - Regeneração por turno: 0
+
+### Ulquiorra
+- Vida 240, Ataque 30, Energia 400
+- Habilidades:
+	- Cero (70 dano fixo, custo: 90)
+	- cero oscuras (140 dano fixo, custo: 90)
+	- Barrage (60 dano fixo + bleed por 2 turnos de 30% do dano da skill, custo: 75)
+	- Heal (cura 100, custo: 170)
+- Regeneração por turno: 40
 
 ## Estrutura
 
@@ -57,7 +66,7 @@ Abra no navegador:
 - `web_api.php`: camada HTTP/JSON para o front-end
 - `index.php`: interface de terminal reutilizando `GameService.php`
 - `batalha.html` / `batalha.css` / `app.js`: interface web
-- `gojopasta/sprites` e `sukunapasta/sprites`: sprites e imagens de domínio usados no front-end
+- `gojopasta/sprites`, `sukunapasta/sprites`, `sanspasta/sprites`, `ulquiorrapasta/sprites`: sprites e imagens usadas no front-end
 
 ## Observações
 

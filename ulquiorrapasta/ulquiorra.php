@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/../Personagem.php';
-require_once __DIR__ . '/../ExcecaoJogo.php';
 
 class Ulquiorra extends Personagem {
 
@@ -10,7 +9,7 @@ class Ulquiorra extends Personagem {
 	const CUSTO_BARRAGE = 75;
 	const CUSTO_HEAL = 170;
 	const DANO_CERO = 70;
-	const DANO_TRUE_CERO = 140;
+	const DANO_TRUE_CERO = 110;
 	const DANO_BARRAGE = 60;
 	const BARRAGE_BLEED_PERCENTUAL = 0.30;
 	const BARRAGE_BLEED_TURNOS = 2;
@@ -26,77 +25,40 @@ class Ulquiorra extends Personagem {
 	}
 
 	public function cero(Personagem $alvo): string {
-		if ($this->energiaAtual < self::CUSTO_CERO) {
-			throw new EnergiaInsuficienteException();
-		}
+		$this->consumirEnergia(self::CUSTO_CERO);
+		$resultado = $this->executarAtaqueDireto($alvo, "Cero", self::DANO_CERO);
 
-		$this->energiaAtual -= self::CUSTO_CERO;
-
-		if ($alvo->tentouDesviarAtaque()) {
-			return "{$this->nome} usou Cero em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
-		}
-
-		$vidaAntes = $alvo->getVidaAtual();
-		$danoReal = self::DANO_CERO;
-		$alvo->receberDano($danoReal);
-
-		return $this->formatarMensagemAcaoComAlvo("Cero", $alvo, $vidaAntes, $danoReal);
+		return $resultado['mensagem'];
 	}
 
 	public function heal(): string {
-		if ($this->energiaAtual < self::CUSTO_HEAL) {
-			throw new EnergiaInsuficienteException();
-		}
-
-		$this->energiaAtual -= self::CUSTO_HEAL;
-		$this->vidaAtual += self::CURA_HEAL;
-
-		if ($this->vidaAtual > $this->vidaMaxima) {
-			$this->vidaAtual = $this->vidaMaxima;
-		}
+		$this->consumirEnergia(self::CUSTO_HEAL);
+		$this->curarVida(self::CURA_HEAL);
 
 		return $this->formatarMensagemAcaoSemAlvo("Heal");
 	}
 
 	public function trueCero(Personagem $alvo): string {
-		if ($this->energiaAtual < self::CUSTO_TRUE_CERO) {
-			throw new EnergiaInsuficienteException();
-		}
+		$this->consumirEnergia(self::CUSTO_TRUE_CERO);
+		$resultado = $this->executarAtaqueDireto($alvo, "cero oscuras", self::DANO_TRUE_CERO);
 
-		$this->energiaAtual -= self::CUSTO_TRUE_CERO;
-
-		if ($alvo->tentouDesviarAtaque()) {
-			return "{$this->nome} usou cero oscuras em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
-		}
-
-		$vidaAntes = $alvo->getVidaAtual();
-		$danoReal = self::DANO_TRUE_CERO;
-		$alvo->receberDano($danoReal);
-
-		return $this->formatarMensagemAcaoComAlvo("cero oscuras", $alvo, $vidaAntes, $danoReal);
+		return $resultado['mensagem'];
 	}
 
 	public function barrage(Personagem $alvo): string {
-		if ($this->energiaAtual < self::CUSTO_BARRAGE) {
-			throw new EnergiaInsuficienteException();
+		$this->consumirEnergia(self::CUSTO_BARRAGE);
+		$resultado = $this->executarAtaqueDireto($alvo, "Barrage", self::DANO_BARRAGE);
+
+		if (!$resultado['acertou']) {
+			return $resultado['mensagem'];
 		}
-
-		$this->energiaAtual -= self::CUSTO_BARRAGE;
-
-		if ($alvo->tentouDesviarAtaque()) {
-			return "{$this->nome} usou Barrage em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
-		}
-
-		$vidaAntes = $alvo->getVidaAtual();
-		$danoReal = self::DANO_BARRAGE;
-		$alvo->receberDano($danoReal);
 
 		$danoBleed = (int) ceil(self::DANO_BARRAGE * self::BARRAGE_BLEED_PERCENTUAL);
 		if ($danoBleed > 0) {
 			$alvo->aplicarSangramento($danoBleed, self::BARRAGE_BLEED_TURNOS);
 		}
 
-		$mensagem = $this->formatarMensagemAcaoComAlvo("Barrage", $alvo, $vidaAntes, $danoReal);
+		$mensagem = $resultado['mensagem'];
 
 		if ($danoBleed > 0) {
 			$mensagem .= " Sangramento aplicado por " . self::BARRAGE_BLEED_TURNOS . " turnos ({$danoBleed} por turno).";
@@ -136,10 +98,10 @@ class Ulquiorra extends Personagem {
 
 	public function getDescricoesAcoes(): array {
 		return array_merge(parent::getDescricoesAcoes(), [
-			'Cero' => 'Causa 70 de dano fixo. Custo: ' . self::CUSTO_CERO . ' energia.',
-			'cero oscuras' => 'Causa 140 de dano fixo. Custo: ' . self::CUSTO_TRUE_CERO . ' energia.',
-			'Barrage' => 'Causa 60 de dano fixo e aplica bleed por 2 turnos (30% do dano da skill por turno). Custo: ' . self::CUSTO_BARRAGE . ' energia.',
-			'Heal' => 'Recupera 100 de vida. Custo: ' . self::CUSTO_HEAL . ' energia.',
+			'Cero' => 'Causa 70 de dano. Custo: ' . self::CUSTO_CERO . ' energia.',
+			'cero oscuras' => 'Causa 110 de dano. Custo: ' . self::CUSTO_TRUE_CERO . ' energia.',
+			'Barrage' => 'Causa 60 de dano. Bleed: 18 por turno por 2 turnos. Custo: ' . self::CUSTO_BARRAGE . ' energia.',
+			'Heal' => 'Cura 100 de vida. Custo: ' . self::CUSTO_HEAL . ' energia.',
 		]);
 	}
 
@@ -227,11 +189,11 @@ class Ulquiorra extends Personagem {
 							'sprite' => './ulquiorrapasta/sprites/ulqbarrage2.png',
 							'durationMs' => 150,
 						],
-												[
+						[
 							'sprite' => './ulquiorrapasta/sprites/barrage.png',
 							'durationMs' => 150,
 						],
-						[
+												[
 							'sprite' => './ulquiorrapasta/sprites/ulqbarrage1.png',
 							'durationMs' => 150,
 						],
@@ -239,11 +201,11 @@ class Ulquiorra extends Personagem {
 							'sprite' => './ulquiorrapasta/sprites/ulqbarrage2.png',
 							'durationMs' => 150,
 						],
-												[
+						[
 							'sprite' => './ulquiorrapasta/sprites/barrage.png',
 							'durationMs' => 150,
 						],
-						[
+												[
 							'sprite' => './ulquiorrapasta/sprites/ulqbarrage1.png',
 							'durationMs' => 150,
 						],
@@ -251,11 +213,11 @@ class Ulquiorra extends Personagem {
 							'sprite' => './ulquiorrapasta/sprites/ulqbarrage2.png',
 							'durationMs' => 150,
 						],
-												[
+						[
 							'sprite' => './ulquiorrapasta/sprites/barrage.png',
 							'durationMs' => 150,
 						],
-						[
+												[
 							'sprite' => './ulquiorrapasta/sprites/ulqbarrage1.png',
 							'durationMs' => 150,
 						],
@@ -263,7 +225,7 @@ class Ulquiorra extends Personagem {
 							'sprite' => './ulquiorrapasta/sprites/ulqbarrage2.png',
 							'durationMs' => 150,
 						],
-												[
+						[
 							'sprite' => './ulquiorrapasta/sprites/barrage.png',
 							'durationMs' => 150,
 						],

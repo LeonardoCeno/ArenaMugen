@@ -2,6 +2,9 @@
 	const API_URL = "./web_api.php";
 	const ACOES_POR_PAGINA = 3;
 	const ATRASO_CORTES_DOMINIO_SUKUNA_MS = 1000;
+	const SPRITE_ESQUIVA_SANS = "./sanspasta/sprites/SANSSKILL1FINAL.png";
+	const SPRITE_ESQUIVA_UBUNTUKILLER = "./ubuntukiller/sprites/ESQUIVO.png";
+	const SPRITE_ERRO_INSANO = "./ubuntupasta/sprites/ERROINSANO.avif";
 	const SPRITES_CORTES_DOMINIO_SUKUNA = [
 		"./sukunapasta/sprites/CORTE1.png",
 		"./sukunapasta/sprites/CORTE2.png",
@@ -166,12 +169,24 @@
 		return "direct";
 	}
 
+	function obterFighterRootPorChave(chaveJogador) {
+		return chaveJogador === "p1" ? els.fighters.p1.root : els.fighters.p2.root;
+	}
+
+	function atualizarClasseFlipDoFighter(fighterEl) {
+		if (!fighterEl) {
+			return;
+		}
+
+		fighterEl.classList.toggle("is-flipped", fighterEl.dataset.side === "player2");
+	}
+
 	function mostrarNumeroFlutuante(chaveJogador, valor, tipo = "direct") {
 		if (valor <= 0) {
 			return;
 		}
 
-		const fighter = chaveJogador === "p1" ? els.fighters.p1.root : els.fighters.p2.root;
+		const fighter = obterFighterRootPorChave(chaveJogador);
 		if (!fighter) {
 			return;
 		}
@@ -261,6 +276,18 @@
 		}
 	}
 
+	function limparPreviewDominio() {
+		limparTimerPreviewDominio();
+		limparTimerEfeitosDominio();
+		state.domainPreviewType = null;
+		state.domainEffectsStartAt = 0;
+	}
+
+	function limparEstadoTemporarioCombate() {
+		limparSpritesTemporarios();
+		limparPreviewDominio();
+	}
+
 	function esperar(ms) {
 		if (ms <= 0) {
 			return Promise.resolve();
@@ -268,6 +295,35 @@
 
 		return new Promise((resolve) => {
 			setTimeout(resolve, ms);
+		});
+	}
+
+	function mostrarSplashErroInsano(duracaoMs = 3000) {
+		return new Promise((resolve) => {
+			const overlay = document.createElement("div");
+			overlay.style.position = "fixed";
+			overlay.style.inset = "0";
+			overlay.style.zIndex = "99999";
+			overlay.style.background = "rgba(0, 0, 0, 0.8)";
+			overlay.style.display = "flex";
+			overlay.style.alignItems = "center";
+			overlay.style.justifyContent = "center";
+
+			const img = document.createElement("img");
+			img.src = SPRITE_ERRO_INSANO;
+			img.alt = "ERRO INSANO";
+			img.style.maxWidth = "95vw";
+			img.style.maxHeight = "95vh";
+			img.style.width = "auto";
+			img.style.height = "auto";
+
+			overlay.appendChild(img);
+			document.body.appendChild(overlay);
+
+			setTimeout(() => {
+				overlay.remove();
+				resolve();
+			}, duracaoMs);
 		});
 	}
 
@@ -360,6 +416,7 @@
 		fighterEl.classList.remove("action-casting");
 		fighterEl.classList.remove("true-cero-sized");
 		fighterEl.classList.remove("true-cero-plus-sized");
+		fighterEl.classList.remove("ubuntu-base-smaller");
 		img.removeAttribute("src");
 
 		if (spriteTemporario) {
@@ -374,9 +431,7 @@
 				fighterEl.classList.add("true-cero-plus-sized");
 			}
 
-			if (fighterEl.dataset.side === "player2") {
-				fighterEl.classList.add("is-flipped");
-			}
+			atualizarClasseFlipDoFighter(fighterEl);
 
 			img.onerror = () => fighterEl.classList.remove("has-image", "is-flipped", "action-casting");
 			if (initial) {
@@ -388,10 +443,10 @@
 		if (spriteBase) {
 			img.src = spriteBase;
 			fighterEl.classList.add("has-image");
-
-			if (fighterEl.dataset.side === "player2") {
-				fighterEl.classList.add("is-flipped");
+			if ((nomeClasse || "").toLowerCase() === "ubuntu") {
+				fighterEl.classList.add("ubuntu-base-smaller");
 			}
+			atualizarClasseFlipDoFighter(fighterEl);
 		}
 
 		img.onerror = () => fighterEl.classList.remove("has-image", "is-flipped");
@@ -525,7 +580,9 @@
 				mode: overlay.mode === "projectile"
 					? "projectile"
 					: (overlay.mode === "beam" ? "beam" : "attached"),
-				beamTone: overlay.beamTone === "dark" ? "dark" : "normal",
+				beamTone: overlay.beamTone === "dark"
+					? "dark"
+					: (overlay.beamTone === "pink" ? "pink" : "normal"),
 				target: overlay.target === "self" ? "self" : "opponent",
 				sprite: typeof overlay.sprite === "string" ? overlay.sprite : "",
 				startMs: Number(overlay.startMs) > 0 ? Number(overlay.startMs) : 0,
@@ -651,6 +708,8 @@
 						beamEl.className = "arena-energy-beam";
 						if (overlay.beamTone === "dark") {
 							beamEl.classList.add("arena-energy-beam-dark");
+						} else if (overlay.beamTone === "pink") {
+							beamEl.classList.add("arena-energy-beam-pink");
 						}
 						beamEl.setAttribute("aria-hidden", "true");
 						beamEl.style.left = `${origemX}px`;
@@ -801,12 +860,26 @@
 	}
 
 	function obterElementoFighter(chaveJogador) {
-		return els.fighters[chaveJogador]?.root || null;
+		return obterFighterRootPorChave(chaveJogador) || null;
 	}
 
 	function animarEsquiva(chaveJogador) {
 		const fighter = obterElementoFighter(chaveJogador);
 		if (!fighter) return;
+
+		const lado = obterChaveLado(chaveJogador);
+		const personagem = state.serverState?.[chaveJogador];
+		const classePersonagem = (personagem?.classe || "").toLowerCase();
+		const usaEsquivaEspecial = classePersonagem === "sans" || classePersonagem === "ubuntukiller";
+		const spriteEsquiva = classePersonagem === "ubuntukiller"
+			? SPRITE_ESQUIVA_UBUNTUKILLER
+			: SPRITE_ESQUIVA_SANS;
+		const spriteAnterior = state.spriteTemporario[lado];
+
+		if (usaEsquivaEspecial) {
+			state.spriteTemporario[lado] = spriteEsquiva;
+			atualizarHUD();
+		}
 
 		fighter.classList.remove("dodge-anim");
 		void fighter.offsetWidth;
@@ -814,6 +887,11 @@
 
 		setTimeout(() => {
 			fighter.classList.remove("dodge-anim");
+
+			if (usaEsquivaEspecial && state.spriteTemporario[lado] === spriteEsquiva) {
+				state.spriteTemporario[lado] = spriteAnterior;
+				atualizarHUD();
+			}
 		}, 1200);
 	}
 
@@ -829,6 +907,9 @@
 		const ladoAtacante = obterChaveLado(atacanteKey);
 		const ladoDefensor = obterChaveLado(defensorKey);
 		const nomeAcao = acao.nomeSprite || acao.nome;
+		const ehErroUbuntu =
+			nomeAcao === "sudo apt install" &&
+			((state.serverState?.[atacanteKey]?.classe || "").toLowerCase() === "ubuntu");
 		const tipoPreviewDominio = obterTipoPreviewDominio(atacanteKey, nomeAcao);
 		const delayDominioMs = obterDelayDominio(atacanteKey, nomeAcao);
 		const framesAnimacao = obterFramesAnimacaoAcao(atacanteKey, nomeAcao);
@@ -845,8 +926,7 @@
 		const duracaoDefesa = executarAnimacaoFrames(ladoDefensor, framesReacaoDefesa, 0);
 		const duracaoOverlays = executarOverlaysAnimacao(atacanteKey, overlaysAnimacao);
 
-		limparTimerPreviewDominio();
-		limparTimerEfeitosDominio();
+		limparPreviewDominio();
 		if (tipoPreviewDominio) {
 			const atrasoExtraEfeitoDominio = tipoPreviewDominio === "sukuna"
 				? ATRASO_CORTES_DOMINIO_SUKUNA_MS
@@ -861,8 +941,6 @@
 				state.domainPreviewTimerId = null;
 				atualizarHUD();
 			}, delayDominioMs);
-		} else {
-			state.domainEffectsStartAt = 0;
 		}
 
 		const duracaoPreviewDominio = tipoPreviewDominio
@@ -879,15 +957,22 @@
 			});
 
 			limparSpritesTemporarios();
+			const mensagem = resposta.message || "Ação executada.";
+
+			if (resposta.state && resposta.state.started === false) {
+				if (ehErroUbuntu) {
+					await mostrarSplashErroInsano(3000);
+				}
+				resetarParaSetup();
+				adicionarLog(mensagem);
+				return;
+			}
+
 			if (resposta.state) {
 				aplicarNovoEstado(resposta.state, true);
 			}
 
-			limparTimerPreviewDominio();
-			limparTimerEfeitosDominio();
-			state.domainPreviewType = null;
-			state.domainEffectsStartAt = 0;
-			const mensagem = resposta.message || "Ação executada.";
+			limparPreviewDominio();
 			adicionarLog(mensagem);
 			atualizarHUD();
 
@@ -895,11 +980,7 @@
 				animarEsquiva(atacanteKey === "p1" ? "p2" : "p1");
 			}
 		} catch (erro) {
-			limparSpritesTemporarios();
-			limparTimerPreviewDominio();
-			limparTimerEfeitosDominio();
-			state.domainPreviewType = null;
-			state.domainEffectsStartAt = 0;
+			limparEstadoTemporarioCombate();
 			atualizarHUD();
 			adicionarLog(`Erro ao executar ação: ${erro.message || "falha desconhecida."}`);
 		} finally {
@@ -914,10 +995,7 @@
 		state.serverState = null;
 		state.resolvendoAcao = false;
 		state.actionPage = 0;
-		limparTimerPreviewDominio();
-		limparTimerEfeitosDominio();
-		state.domainPreviewType = null;
-		state.domainEffectsStartAt = 0;
+		limparPreviewDominio();
 		limparTodosTimersAnimacao();
 		limparCortesDominioSukuna();
 		limparSpritesTemporarios();
@@ -958,10 +1036,7 @@
 			aplicarNovoEstado(resposta.state, false);
 			state.resolvendoAcao = false;
 			state.actionPage = 0;
-			limparTimerPreviewDominio();
-			limparTimerEfeitosDominio();
-			state.domainPreviewType = null;
-			state.domainEffectsStartAt = 0;
+			limparPreviewDominio();
 			limparTodosTimersAnimacao();
 			limparSpritesTemporarios();
 			esconderPreviewSkill();

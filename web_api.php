@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/GameService.php';
-require_once __DIR__ . '/ExcecaoJogo.php';
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');
@@ -43,45 +42,36 @@ function obterPartidaAtiva(): array {
     return $_SESSION['game'];
 }
 
-$input = receberJson();
-$action = (string)($input['action'] ?? 'state');
+function iniciarPartida(array $input): void {
+    $p1 = GameService::createCharacter(
+        (string)($input['p1Class'] ?? 'sukuna'),
+        (string)($input['p1Name'] ?? 'Jogador 1')
+    );
 
-try {
-    if ($action === 'start') {
-        $p1 = GameService::createCharacter(
-            (string)($input['p1Class'] ?? 'sukuna'),
-            (string)($input['p1Name'] ?? 'Jogador 1')
-        );
+    $p2 = GameService::createCharacter(
+        (string)($input['p2Class'] ?? 'gojo'),
+        (string)($input['p2Name'] ?? 'Jogador 2')
+    );
 
-        $p2 = GameService::createCharacter(
-            (string)($input['p2Class'] ?? 'gojo'),
-            (string)($input['p2Name'] ?? 'Jogador 2')
-        );
+    $_SESSION['game'] = GameService::createGameState($p1, $p2);
 
-        $_SESSION['game'] = GameService::createGameState($p1, $p2);
+    responder([
+        'ok' => true,
+        'state' => exportarEstadoDaSessao('Partida iniciada.'),
+    ]);
+}
 
-        responder([
-            'ok' => true,
-            'state' => exportarEstadoDaSessao('Partida iniciada.'),
-        ]);
-    }
+function executarAcao(array $input): void {
+    $game = obterPartidaAtiva();
 
-    if ($action === 'state') {
-        responder([
-            'ok' => true,
-            'state' => exportarEstadoDaSessao(),
-        ]);
-    }
+    $actionType = (string)($input['actionType'] ?? '');
+    $skillIndex = isset($input['skillIndex']) ? (int)$input['skillIndex'] : null;
+    $deveRetornarSetup = GameService::deveRetornarParaSetupPorErro($game, $actionType, $skillIndex);
 
-    if ($action === 'action') {
-        $game = obterPartidaAtiva();
+    $mensagem = GameService::performTurn($game, $actionType, $skillIndex);
 
-        $actionType = (string)($input['actionType'] ?? '');
-        $skillIndex = isset($input['skillIndex']) ? (int)$input['skillIndex'] : null;
-
-        $mensagem = GameService::performTurn($game, $actionType, $skillIndex);
-
-        $_SESSION['game'] = $game;
+    if ($deveRetornarSetup) {
+        unset($_SESSION['game']);
 
         responder([
             'ok' => true,
@@ -90,7 +80,38 @@ try {
         ]);
     }
 
-    throw new EntradaInvalidaException();
+    $_SESSION['game'] = $game;
+
+    responder([
+        'ok' => true,
+        'message' => $mensagem,
+        'state' => exportarEstadoDaSessao($mensagem),
+    ]);
+}
+
+$input = receberJson();
+$action = (string)($input['action'] ?? 'state');
+
+try {
+    switch ($action) {
+        case 'start':
+            iniciarPartida($input);
+            break;
+
+        case 'state':
+            responder([
+                'ok' => true,
+                'state' => exportarEstadoDaSessao(),
+            ]);
+            break;
+
+        case 'action':
+            executarAcao($input);
+            break;
+
+        default:
+            throw new EntradaInvalidaException();
+    }
 } catch (ExcecaoJogo $e) {
     responder([
         'ok' => false,

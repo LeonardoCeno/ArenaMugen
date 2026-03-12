@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . '/../Personagem.php';
-require_once __DIR__ . '/../ExcecaoJogo.php';
 
 class Gojo extends Personagem {
 
@@ -20,65 +19,33 @@ class Gojo extends Personagem {
     }
 
     public function vazioRoxo(Personagem $alvo): string {
-
-        if ($this->energiaAtual < self::CUSTO_VAZIO_ROXO) {
-            throw new EnergiaInsuficienteException();
-        }
-
-        $this->energiaAtual -= self::CUSTO_VAZIO_ROXO;
+        $this->consumirEnergia(self::CUSTO_VAZIO_ROXO);
 
         $danoReal = $this->ataque * 4; // ignora defesa
-        $vidaAntes = $alvo->getVidaAtual();
+        $resultado = $this->executarAtaqueDireto($alvo, "Vazio Roxo", $danoReal);
 
-        $alvo->receberDano($danoReal);
-
-        return $this->formatarMensagemAcaoComAlvo("Vazio Roxo", $alvo, $vidaAntes, $danoReal);
+        return $resultado['mensagem'];
     }
 
     public function azul(Personagem $alvo): string {
-
-        if ($this->energiaAtual < self::CUSTO_AZUL) {
-            throw new EnergiaInsuficienteException();
-        }
-
-        $this->energiaAtual -= self::CUSTO_AZUL;
+        $this->consumirEnergia(self::CUSTO_AZUL);
 
         $danoBase = max(0, $this->ataque);
-
         $danoReal = $danoBase * 2;
-        $vidaAntes = $alvo->getVidaAtual();
+        $resultado = $this->executarAtaqueDireto($alvo, "Azul", $danoReal);
 
-        $alvo->receberDano($danoReal);
-
-        return $this->formatarMensagemAcaoComAlvo("Azul", $alvo, $vidaAntes, $danoReal);
+        return $resultado['mensagem'];
     }
 
     public function reverseEnergy(): string {
-
-        if ($this->energiaAtual < self::CUSTO_REVERSE) {
-            throw new EnergiaInsuficienteException();
-        }
-
-        $this->energiaAtual -= self::CUSTO_REVERSE;
-
-        $cura = 50;
-
-        $this->vidaAtual += $cura;
-
-        if ($this->vidaAtual > $this->vidaMaxima) {
-            $this->vidaAtual = $this->vidaMaxima;
-        }
+        $this->consumirEnergia(self::CUSTO_REVERSE);
+        $this->curarVida(50);
 
         return $this->formatarMensagemAcaoSemAlvo("Reverse Energy");
     }
 
     public function infinityVoid(): string {
-
-        if ($this->energiaAtual < self::CUSTO_INFINITO) {
-            throw new EnergiaInsuficienteException();
-        }
-
-        $this->energiaAtual -= self::CUSTO_INFINITO;
+        $this->consumirEnergia(self::CUSTO_INFINITO);
 
         return $this->formatarMensagemAcaoSemAlvo("Domain");
     }
@@ -120,10 +87,10 @@ class Gojo extends Personagem {
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'Azul' => "Causa 2x o dano base: {$this->ataque} x 2. Custo: " . self::CUSTO_AZUL . ' energia.',
-            'Vazio Roxo' => "Causa {$this->ataque} x 5 = " . ($this->ataque * 5) . ' de dano. Custo: ' . self::CUSTO_VAZIO_ROXO . ' energia.',
-            'Reverse Energy' => 'Cura 50 de vida imediatamente. Custo: ' . self::CUSTO_REVERSE . ' energia.',
-            'Domain' => 'Ativa domínio, aplica pulo de turnos no inimigo e altera o cenário temporariamente. Custo: ' . self::CUSTO_INFINITO . ' energia.',
+            'Azul' => 'Causa 40 de dano. Custo: ' . self::CUSTO_AZUL . ' energia.',
+            'Vazio Roxo' => 'Causa 80 de dano. Custo: ' . self::CUSTO_VAZIO_ROXO . ' energia.',
+            'Reverse Energy' => 'Cura 50 de vida. Custo: ' . self::CUSTO_REVERSE . ' energia.',
+            'Domain' => 'Impede o oponente de fazer qualquer ação durante 2 turnos. Custo: ' . self::CUSTO_INFINITO . ' energia.',
         ]);
     }
 

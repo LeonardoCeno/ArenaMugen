@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/ExcecaoJogo.php';
+
 abstract class Personagem {
 
     protected string $nome;
@@ -169,6 +171,52 @@ abstract class Personagem {
     public function defender(): string {
         $this->defendendo = true;
         return $this->formatarMensagemAcaoSemAlvo("Defesa");
+    }
+
+    protected function consumirEnergia(int $custo): void {
+        if ($custo < 0) {
+            $custo = 0;
+        }
+
+        if ($this->energiaAtual < $custo) {
+            throw new EnergiaInsuficienteException();
+        }
+
+        $this->energiaAtual -= $custo;
+    }
+
+    protected function curarVida(int $cura): void {
+        if ($cura <= 0) {
+            return;
+        }
+
+        $this->vidaAtual += $cura;
+
+        if ($this->vidaAtual > $this->vidaMaxima) {
+            $this->vidaAtual = $this->vidaMaxima;
+        }
+    }
+
+    protected function executarAtaqueDireto(Personagem $alvo, string $nomeAcao, int $dano): array {
+        if ($alvo->tentouDesviarAtaque()) {
+            return [
+                'acertou' => false,
+                'vidaAntes' => $alvo->getVidaAtual(),
+                'danoReal' => 0,
+                'mensagem' => "{$this->nome} usou {$nomeAcao} em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!",
+            ];
+        }
+
+        $vidaAntes = $alvo->getVidaAtual();
+        $danoReal = max(0, $dano);
+        $alvo->receberDano($danoReal);
+
+        return [
+            'acertou' => true,
+            'vidaAntes' => $vidaAntes,
+            'danoReal' => $danoReal,
+            'mensagem' => $this->formatarMensagemAcaoComAlvo($nomeAcao, $alvo, $vidaAntes, $danoReal),
+        ];
     }
 
     public function aplicarSangramento(int $danoPorTurno, int $turnos): void {
