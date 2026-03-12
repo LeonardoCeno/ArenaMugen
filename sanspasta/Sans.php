@@ -5,17 +5,17 @@ require_once __DIR__ . '/../ExcecaoJogo.php';
 
 class Sans extends Personagem {
 
-    const CUSTO_BLASTER = 50;
-    const CUSTO_PAREDE_OSSOS = 40;
+    const CUSTO_EEEEH = 0;
+    const DANO_EEEEH = 999;
     const REGENERACAO_PROPRIA = 0;
 
     public function __construct(string $nome) {
-        parent::__construct($nome, 1, 30, 200);
+        parent::__construct($nome, 1, 1, 0);
     }
 
     public static function getDescricao(): string {
 
-        return "Sans (HP baixíssimo, ataque alto, passiva: esquiva usando energia, habilidades: Blaster e Parede de Ossos)";
+        return "Sans (HP baixíssimo, ataque alto, passiva: esquiva usando energia, habilidade: eeeeh)";
     }
 
     public function receberDano(int $danoReal): void {
@@ -45,57 +45,35 @@ class Sans extends Personagem {
         }
     }
 
-    public function blaster(Personagem $alvo): string {
-
-        if ($this->energiaAtual < self::CUSTO_BLASTER) {
+    public function eeeeh(Personagem $alvo): string {
+        if ($this->energiaAtual < self::CUSTO_EEEEH) {
             throw new EnergiaInsuficienteException();
         }
 
-        $this->energiaAtual -= self::CUSTO_BLASTER;
-        $vidaAntes = $alvo->getVidaAtual();
+        $this->energiaAtual -= self::CUSTO_EEEEH;
 
-        $danoBase = max(0, $this->ataque);
-
-        $danoReal = $danoBase * 3;
-
-        $alvo->receberDano($danoReal);
-
-        return $this->formatarMensagemAcaoComAlvo("Blaster", $alvo, $vidaAntes, $danoReal);
-    }
-
-    public function paredeDeOssos(Personagem $alvo): string {
-
-        if ($this->energiaAtual < self::CUSTO_PAREDE_OSSOS) {
-            throw new EnergiaInsuficienteException();
+        if ($alvo->tentouDesviarAtaque()) {
+            return "{$this->nome} usou eeeeh em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
         }
 
-        $this->energiaAtual -= self::CUSTO_PAREDE_OSSOS;
         $vidaAntes = $alvo->getVidaAtual();
-
-        $danoBase = max(0, $this->ataque);
-
-        $danoReal = $danoBase * 2;
+        $danoReal = self::DANO_EEEEH;
 
         $alvo->receberDano($danoReal);
 
-        return $this->formatarMensagemAcaoComAlvo("Parede de Ossos", $alvo, $vidaAntes, $danoReal);
+        return $this->formatarMensagemAcaoComAlvo("eeeeh", $alvo, $vidaAntes, $danoReal);
     }
 
     public function usarHabilidadeEspecial(Personagem $alvo): string {
-        return $this->blaster($alvo);
+        return $this->eeeeh($alvo);
     }
 
     public function getHabilidades(): array {
 
         return [
             [
-                "nome" => "Blaster",
-                "metodo" => "blaster",
-                "precisaAlvo" => true
-            ],
-            [
-                "nome" => "Parede de Ossos",
-                "metodo" => "paredeDeOssos",
+                "nome" => "eeeeh",
+                "metodo" => "eeeeh",
                 "precisaAlvo" => true
             ]
         ];
@@ -103,20 +81,20 @@ class Sans extends Personagem {
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'Blaster' => "Causa 3x o dano base: {$this->ataque} x 3. Custo: " . self::CUSTO_BLASTER . ' energia.',
-            'Parede de Ossos' => "Causa 2x o dano base: {$this->ataque} x 2. Custo: " . self::CUSTO_PAREDE_OSSOS . ' energia.',
+            'eeeeh' => 'Causa 999 de dano fixo. Custo: ' . self::CUSTO_EEEEH . ' energia. (único que falto orçamento (tempo))',
         ]);
     }
 
     public function getConfiguracaoVisual(): array {
         return [
-            'baseSprite' => './sanspasta/SANSBASEFINAL.png',
+            'baseSprite' => './sanspasta/sprites/SANSBASEFINAL.png',
+            'winImage' => './sanspasta/sprites/sansrealista.jpg',
             'actions' => [
-                'Parede de Ossos' => [
+                'eeeeh' => [
                     'frames' => [
                         [
-                            'sprite' => './sanspasta/SANSSKILL1FINAL.png',
-                            'durationMs' => 2000,
+                            'sprite' => './sanspasta/sprites/SANSKILL1FINAL.png',
+                            'durationMs' => 1000,
                         ],
                     ],
                 ],

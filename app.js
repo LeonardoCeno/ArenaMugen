@@ -358,11 +358,21 @@
 
 		fighterEl.classList.remove("has-image", "is-flipped");
 		fighterEl.classList.remove("action-casting");
+		fighterEl.classList.remove("true-cero-sized");
+		fighterEl.classList.remove("true-cero-plus-sized");
 		img.removeAttribute("src");
 
 		if (spriteTemporario) {
 			img.src = spriteTemporario;
 			fighterEl.classList.add("has-image", "action-casting");
+
+			if (spriteTemporario.endsWith("/ciferfinalform.png") || spriteTemporario.endsWith("/ciferfinalcero.png")) {
+				fighterEl.classList.add("true-cero-sized");
+			}
+
+			if (spriteTemporario.endsWith("/ciferfinalcero.png")) {
+				fighterEl.classList.add("true-cero-plus-sized");
+			}
 
 			if (fighterEl.dataset.side === "player2") {
 				fighterEl.classList.add("is-flipped");
@@ -515,6 +525,7 @@
 				mode: overlay.mode === "projectile"
 					? "projectile"
 					: (overlay.mode === "beam" ? "beam" : "attached"),
+				beamTone: overlay.beamTone === "dark" ? "dark" : "normal",
 				target: overlay.target === "self" ? "self" : "opponent",
 				sprite: typeof overlay.sprite === "string" ? overlay.sprite : "",
 				startMs: Number(overlay.startMs) > 0 ? Number(overlay.startMs) : 0,
@@ -638,6 +649,9 @@
 					if (overlay.mode === "beam") {
 						const beamEl = document.createElement("div");
 						beamEl.className = "arena-energy-beam";
+						if (overlay.beamTone === "dark") {
+							beamEl.classList.add("arena-energy-beam-dark");
+						}
 						beamEl.setAttribute("aria-hidden", "true");
 						beamEl.style.left = `${origemX}px`;
 						beamEl.style.top = `${origemY}px`;

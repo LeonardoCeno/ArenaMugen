@@ -198,6 +198,13 @@ body {
     0 0 24px rgba(70, 255, 140, 0.6);
 }
 
+.arena-energy-beam-dark {
+  background: linear-gradient(90deg, rgba(10, 58, 26, 0.96), rgba(28, 110, 62, 0.82));
+  box-shadow:
+    0 0 12px rgba(12, 70, 34, 0.92),
+    0 0 24px rgba(12, 70, 34, 0.62);
+}
+
 .domain-cut {
   position: absolute;
   height: auto;
@@ -421,6 +428,24 @@ body {
 
 .fighter.is-flipped .fighter-img {
   transform: scaleX(-1);
+}
+
+.fighter.true-cero-sized .fighter-img {
+  transform: scale(1.4);
+  transform-origin: center bottom;
+}
+
+.fighter.is-flipped.true-cero-sized .fighter-img {
+  transform: scaleX(-1) scale(1.4);
+}
+
+.fighter.true-cero-plus-sized .fighter-img {
+  transform: scale(1.5);
+  transform-origin: center bottom;
+}
+
+.fighter.is-flipped.true-cero-plus-sized .fighter-img {
+  transform: scaleX(-1) scale(1.5);
 }
 
 .fighter.dodge-anim {
