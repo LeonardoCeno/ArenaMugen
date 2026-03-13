@@ -181,7 +181,7 @@
 		fighterEl.classList.toggle("is-flipped", fighterEl.dataset.side === "player2");
 	}
 
-	function mostrarNumeroFlutuante(chaveJogador, valor, tipo = "direct") {
+	function mostrarNumeroFlutuante(chaveJogador, valor, tipo = "direct", foiCritico = false) {
 		if (valor <= 0) {
 			return;
 		}
@@ -194,6 +194,9 @@
 		const damageEl = document.createElement("div");
 		const tipoNormalizado = normalizarTipoFlutuante(tipo);
 		damageEl.className = `damage-float damage-${tipoNormalizado}`;
+		if (foiCritico && tipoNormalizado !== "heal") {
+			damageEl.classList.add("damage-float-critical");
+		}
 		damageEl.textContent = tipoNormalizado === "heal" ? `+${valor}` : `-${valor}`;
 		fighter.appendChild(damageEl);
 
@@ -220,9 +223,34 @@
 		const curaP2 = Math.max(0, (novoEstado.p2?.vidaAtual ?? 0) - (estadoAnterior.p2?.vidaAtual ?? 0));
 		const tipoDanoP1 = novoEstado.p1?.ultimoTipoDano || "direct";
 		const tipoDanoP2 = novoEstado.p2?.ultimoTipoDano || "direct";
+		const mensagemAcao = (novoEstado?.message || "").toString();
+		const teveCritico = mensagemAcao.includes("Acerto crítico!");
+		const nomeP1 = (novoEstado?.p1?.nome || "").toString();
+		const nomeP2 = (novoEstado?.p2?.nome || "").toString();
 
-		mostrarNumeroFlutuante("p1", danoP1, tipoDanoP1);
-		mostrarNumeroFlutuante("p2", danoP2, tipoDanoP2);
+		let criticoP1 = false;
+		let criticoP2 = false;
+
+		if (teveCritico) {
+			if (nomeP1 && mensagemAcao.includes(`em ${nomeP1}`) && danoP1 > 0) {
+				criticoP1 = true;
+			}
+
+			if (nomeP2 && mensagemAcao.includes(`em ${nomeP2}`) && danoP2 > 0) {
+				criticoP2 = true;
+			}
+
+			if (!criticoP1 && !criticoP2) {
+				if (danoP1 > 0 && danoP2 <= 0) {
+					criticoP1 = true;
+				} else if (danoP2 > 0 && danoP1 <= 0) {
+					criticoP2 = true;
+				}
+			}
+		}
+
+		mostrarNumeroFlutuante("p1", danoP1, tipoDanoP1, criticoP1);
+		mostrarNumeroFlutuante("p2", danoP2, tipoDanoP2, criticoP2);
 		mostrarNumeroFlutuante("p1", curaP1, "heal");
 		mostrarNumeroFlutuante("p2", curaP2, "heal");
 	}

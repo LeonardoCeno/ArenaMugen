@@ -21,7 +21,7 @@ class Gojo extends Personagem {
     public function vazioRoxo(Personagem $alvo): string {
         $this->consumirEnergia(self::CUSTO_VAZIO_ROXO);
 
-        $danoReal = $this->ataque * 4; // ignora defesa
+        $danoReal = $this->ataque * 5; // ignora defesa
         $resultado = $this->executarAtaqueDireto($alvo, "Vazio Roxo", $danoReal);
 
         return $resultado['mensagem'];
@@ -88,7 +88,7 @@ class Gojo extends Personagem {
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
             'Azul' => 'Causa 40 de dano. Custo: ' . self::CUSTO_AZUL . ' energia.',
-            'Vazio Roxo' => 'Causa 80 de dano. Custo: ' . self::CUSTO_VAZIO_ROXO . ' energia.',
+            'Vazio Roxo' => 'Causa 100 de dano. Custo: ' . self::CUSTO_VAZIO_ROXO . ' energia.',
             'Reverse Energy' => 'Cura 50 de vida. Custo: ' . self::CUSTO_REVERSE . ' energia.',
             'Domain' => 'Impede o oponente de fazer qualquer ação durante 2 turnos. Custo: ' . self::CUSTO_INFINITO . ' energia.',
         ]);

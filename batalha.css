@@ -275,6 +275,10 @@ body {
   color: #66e08b;
 }
 
+.damage-float.damage-float-critical {
+  font-size: 4.85rem;
+}
+
 .damage-float.show {
   animation: damage-rise 1200ms ease-out forwards;
 }
@@ -469,13 +473,13 @@ body {
 
 @keyframes dodge-right {
   0% { transform: translateX(0); }
-  35% { transform: translateX(32px); }
+  35% { transform: translateX(52px); }
   100% { transform: translateX(0); }
 }
 
 @keyframes dodge-left {
   0% { transform: translateX(0); }
-  35% { transform: translateX(-32px); }
+  35% { transform: translateX(-52px); }
   100% { transform: translateX(0); }
 }
 

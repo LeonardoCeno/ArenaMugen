@@ -70,13 +70,13 @@ class UbuntuKiller extends Personagem {
 
     public function getConfiguracaoVisual(): array {
         return [
-            'baseSprite' => './ubuntukiller/sprites/UBUNTUKILLER.png',
+            'baseSprite' => './ubuntukiller/sprites/EUBASE.png',
             'winImage' => './ubuntukiller/sprites/EUWIN.png',
             'actions' => [
                 'ubuntubuxa' => [
                     'frames' => [
                         [
-                            'sprite' => './ubuntukiller/sprites/FOGO.png',
+                            'sprite' => './ubuntukiller/sprites/FOGOREAL.png',
                             'durationMs' => 1800,
                         ],
                         [

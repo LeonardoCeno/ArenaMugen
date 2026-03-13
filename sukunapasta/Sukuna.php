@@ -4,9 +4,9 @@ require_once __DIR__ . '/../Personagem.php';
 
 class Sukuna extends Personagem {
 
-    const CUSTO_DESMANTELAR = 250;
+    const CUSTO_DESMANTELAR = 550;
     const CUSTO_KAMINO_FUGA = 800;
-    const CUSTO_DOMAIN = 1200;
+    const CUSTO_DOMAIN = 1900;
     const CUSTO_REVERSE = 500;
     const REGENERACAO_PROPRIA = 70;
 
@@ -80,15 +80,15 @@ class Sukuna extends Personagem {
             return $resultado['mensagem'];
         }
 
-        $danoBleed = (int) ceil($danoReal * 0.50);
+        $danoBleed = (int) ceil($danoReal * 0.30);
         if ($danoBleed > 0) {
-            $alvo->aplicarSangramento($danoBleed, 4);
+            $alvo->aplicarSangramento($danoBleed, 2);
         }
 
         $mensagem = $resultado['mensagem'];
 
         if ($danoBleed > 0) {
-            $mensagem .= " Sangramento aplicado por 4 turnos ({$danoBleed} por turno).";
+            $mensagem .= " Sangramento aplicado por 3 turnos ({$danoBleed} por turno).";
         }
 
         return $mensagem;
@@ -124,7 +124,7 @@ class Sukuna extends Personagem {
             'Desmantelar' => 'Causa 38 de dano. Bleed: 16 por turno por 2 turnos. Custo: ' . self::CUSTO_DESMANTELAR . ' energia.',
             'Kamino Fuga' => 'Causa 50 de dano. Burn: 20 por turno por 1 turno. Custo: ' . self::CUSTO_KAMINO_FUGA . ' energia.',
             'Reverse Energy' => 'Cura 50 de vida. Custo: ' . self::CUSTO_REVERSE . ' energia.',
-            'Domain' => 'Causa 70 de dano. Bleed: por 4 turnos. Custo: ' . self::CUSTO_DOMAIN . ' energia.',
+            'Domain' => 'Causa 70 de dano. Bleed: por 3 turnos. Custo: ' . self::CUSTO_DOMAIN . ' energia.',
         ]);
     }
 

@@ -127,7 +127,7 @@ abstract class Personagem {
         $foiCritico = $this->tentouCriticoAtaque();
 
         if ($foiCritico) {
-            $danoReal = (int) ceil($danoReal * 1.5);
+                $danoReal = (int) ceil($danoReal * 2);
         }
 
         $alvo->receberDano($danoReal);
@@ -146,7 +146,7 @@ abstract class Personagem {
     }
 
     protected function tentouCriticoAtaque(): bool {
-        return random_int(1, 100) <= 2;
+        return random_int(1, 100) <= 5;
     }
 
     protected function formatarMensagemAcaoComAlvo(
@@ -203,19 +203,33 @@ abstract class Personagem {
                 'acertou' => false,
                 'vidaAntes' => $alvo->getVidaAtual(),
                 'danoReal' => 0,
+                'foiCritico' => false,
                 'mensagem' => "{$this->nome} usou {$nomeAcao} em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!",
             ];
         }
 
         $vidaAntes = $alvo->getVidaAtual();
         $danoReal = max(0, $dano);
+        $foiCritico = $this->tentouCriticoAtaque();
+
+        if ($foiCritico) {
+                $danoReal = (int) ceil($danoReal * 2);
+        }
+
         $alvo->receberDano($danoReal);
+
+        $mensagem = $this->formatarMensagemAcaoComAlvo($nomeAcao, $alvo, $vidaAntes, $danoReal);
+
+        if ($foiCritico && $danoReal > 0) {
+            $mensagem .= " Acerto crítico!";
+        }
 
         return [
             'acertou' => true,
             'vidaAntes' => $vidaAntes,
             'danoReal' => $danoReal,
-            'mensagem' => $this->formatarMensagemAcaoComAlvo($nomeAcao, $alvo, $vidaAntes, $danoReal),
+            'foiCritico' => $foiCritico,
+            'mensagem' => $mensagem,
         ];
     }
 
