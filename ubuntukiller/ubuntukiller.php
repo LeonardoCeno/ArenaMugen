@@ -86,6 +86,16 @@ class UbuntuKiller extends Personagem {
                     ],
                 ],
             ],
+                        'reactions' => [
+                'defendingHit' => [
+                    'frames' => [
+                        [
+                            'sprite' => './ubuntukiller/sprites/euauratruemenor.png',
+                            'durationMs' => 1200,
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 
