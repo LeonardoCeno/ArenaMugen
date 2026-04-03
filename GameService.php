@@ -11,6 +11,7 @@ require_once __DIR__ . '/mikupasta/miku.php';
 require_once __DIR__ . '/ubuntupasta/ubuntu.php';
 require_once __DIR__ . '/ubuntukiller/ubuntukiller.php';
 require_once __DIR__ . '/labubupasta/labubu.php';
+require_once __DIR__ . '/profepasta/profe.php';
 
 class GameService {
     private static function normalizarChaveJogador(?string $key): string {
@@ -69,6 +70,7 @@ class GameService {
             'labubu' => Labubu::class,
             'ubuntu' => Ubuntu::class,
             'ubuntukiller' => UbuntuKiller::class,
+            'profe' => Profe::class,
         ];
     }
 
