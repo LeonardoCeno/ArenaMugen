@@ -174,7 +174,8 @@ class Gojo extends Personagem {
                     ],
                 ],
                 'Domain' => [
-                                        'domainDelayMs' => 1500,
+                    'domainDelayMs' => 1500,
+                    'domainArenaClass' => 'domain-active',
                     'frames' => [
                         [
                             'sprite' => './gojopasta/sprites/gojodomainfinal.png',

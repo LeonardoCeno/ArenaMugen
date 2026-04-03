@@ -141,7 +141,7 @@ class Sukuna extends Personagem {
                         ],
                         [
                             'sprite' => './sukunapasta/sprites/sukunachute2real.png',
-                            'durationMs' => 400,
+                            'durationMs' => 300,
                         ],
                     ],
                 ],
@@ -246,6 +246,8 @@ class Sukuna extends Personagem {
                 ],
                 'Domain' => [
                     'domainDelayMs' => 1200,
+                    'domainArenaClass' => 'sukuna-domain-active',
+                    'domainCutsDelayMs' => 1000,
                     'frames' => [
                         [
                             'sprite' => './sukunapasta/sprites/DOMAINSUKUNA.png',

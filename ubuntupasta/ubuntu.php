@@ -66,6 +66,7 @@ class Ubuntu extends Personagem {
 		return [
 			'baseSprite' => './ubuntupasta/sprites/ubuntuMALIGNO.png',
 			'winImage' => './ubuntupasta/sprites/ubuntuMALIGNO.png',
+			'errorSplash' => './ubuntupasta/sprites/ERROINSANO.avif',
 			'actions' => [
 				'abrir terminal' => [
 					'frames' => [

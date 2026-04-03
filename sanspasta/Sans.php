@@ -76,6 +76,7 @@ class Sans extends Personagem {
         return [
             'baseSprite' => './sanspasta/sprites/SANSBASEFINAL.png',
             'winImage' => './sanspasta/sprites/sansrealista.jpg',
+            'dodgeSprite' => './sanspasta/sprites/SANSSKILL1FINAL.png',
             'actions' => [
                 'eeeeh' => [
                     'frames' => [

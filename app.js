@@ -1,10 +1,6 @@
 (function () {
 	const API_URL = "./web_api.php";
 	const ACOES_POR_PAGINA = 3;
-	const ATRASO_CORTES_DOMINIO_SUKUNA_MS = 1000;
-	const SPRITE_ESQUIVA_SANS = "./sanspasta/sprites/SANSSKILL1FINAL.png";
-	const SPRITE_ESQUIVA_UBUNTUKILLER = "./ubuntukiller/sprites/ESQUIVO.png";
-	const SPRITE_ERRO_INSANO = "./ubuntupasta/sprites/ERROINSANO.avif";
 	const SPRITES_CORTES_DOMINIO_SUKUNA = [
 		"./sukunapasta/sprites/CORTE1.png",
 		"./sukunapasta/sprites/CORTE2.png",
@@ -22,18 +18,10 @@
 		serverState: null,
 		resolvendoAcao: false,
 		actionPage: 0,
-		domainPreviewType: null,
-		domainPreviewTimerId: null,
-		domainEffectsTimerId: null,
-		domainEffectsStartAt: 0,
-		animationTimers: {
-			player1: [],
-			player2: [],
-		},
-		spriteTemporario: {
-			player1: null,
-			player2: null,
-		},
+		anim: null,                      // { duration: number, cancel: fn } — toda animação ativa
+		sprites: { p1: null, p2: null }, // sprites temporários dos fighters
+		domainArenaClass: null,          // classe CSS ativa na arena (vem do PHP via domainArenaClass)
+		domainCutsActive: false,         // se o efeito de cortes está ativo
 		domainCutsIntervalId: null,
 		domainCutsTimeouts: [],
 	};
@@ -95,6 +83,10 @@
 		},
 	};
 
+	// =========================================================
+	// API
+	// =========================================================
+
 	async function chamarApi(action, payload = {}) {
 		const response = await fetch(API_URL, {
 			method: "POST",
@@ -115,6 +107,10 @@
 
 		return response.json();
 	}
+
+	// =========================================================
+	// Utilitários gerais
+	// =========================================================
 
 	function percentual(atual, maximo) {
 		if (maximo <= 0) return "0%";
@@ -139,33 +135,23 @@
 		if (acao && typeof acao.description === "string" && acao.description.trim() !== "") {
 			return acao.description;
 		}
-
 		return "Ação de combate sem descrição detalhada.";
 	}
 
 	function mostrarPreviewSkill(nomeAcao, descricao) {
-		if (!els.combatFeed || !els.skillPreviewTitle || !els.skillPreviewText) {
-			return;
-		}
-
+		if (!els.combatFeed || !els.skillPreviewTitle || !els.skillPreviewText) return;
 		els.skillPreviewTitle.textContent = nomeAcao;
 		els.skillPreviewText.textContent = descricao;
 		els.combatFeed.classList.add("previewing-skill");
 	}
 
 	function esconderPreviewSkill() {
-		if (!els.combatFeed) {
-			return;
-		}
-
+		if (!els.combatFeed) return;
 		els.combatFeed.classList.remove("previewing-skill");
 	}
 
 	function normalizarTipoFlutuante(tipo) {
-		if (tipo === "bleed" || tipo === "burn" || tipo === "heal") {
-			return tipo;
-		}
-
+		if (tipo === "bleed" || tipo === "burn" || tipo === "heal") return tipo;
 		return "direct";
 	}
 
@@ -174,22 +160,15 @@
 	}
 
 	function atualizarClasseFlipDoFighter(fighterEl) {
-		if (!fighterEl) {
-			return;
-		}
-
+		if (!fighterEl) return;
 		fighterEl.classList.toggle("is-flipped", fighterEl.dataset.side === "player2");
 	}
 
 	function mostrarNumeroFlutuante(chaveJogador, valor, tipo = "direct", foiCritico = false) {
-		if (valor <= 0) {
-			return;
-		}
+		if (valor <= 0) return;
 
 		const fighter = obterFighterRootPorChave(chaveJogador);
-		if (!fighter) {
-			return;
-		}
+		if (!fighter) return;
 
 		const damageEl = document.createElement("div");
 		const tipoNormalizado = normalizarTipoFlutuante(tipo);
@@ -200,22 +179,15 @@
 		damageEl.textContent = tipoNormalizado === "heal" ? `+${valor}` : `-${valor}`;
 		fighter.appendChild(damageEl);
 
-		requestAnimationFrame(() => {
-			damageEl.classList.add("show");
-		});
-
-		setTimeout(() => {
-			damageEl.remove();
-		}, 1250);
+		requestAnimationFrame(() => damageEl.classList.add("show"));
+		setTimeout(() => damageEl.remove(), 1250);
 	}
 
 	function aplicarNovoEstado(novoEstado, mostrarDano = false) {
 		const estadoAnterior = state.serverState;
 		state.serverState = novoEstado;
 
-		if (!mostrarDano || !estadoAnterior?.started || !novoEstado?.started) {
-			return;
-		}
+		if (!mostrarDano || !estadoAnterior?.started || !novoEstado?.started) return;
 
 		const danoP1 = Math.max(0, (estadoAnterior.p1?.vidaAtual ?? 0) - (novoEstado.p1?.vidaAtual ?? 0));
 		const danoP2 = Math.max(0, (estadoAnterior.p2?.vidaAtual ?? 0) - (novoEstado.p2?.vidaAtual ?? 0));
@@ -232,20 +204,11 @@
 		let criticoP2 = false;
 
 		if (teveCritico) {
-			if (nomeP1 && mensagemAcao.includes(`em ${nomeP1}`) && danoP1 > 0) {
-				criticoP1 = true;
-			}
-
-			if (nomeP2 && mensagemAcao.includes(`em ${nomeP2}`) && danoP2 > 0) {
-				criticoP2 = true;
-			}
-
+			if (nomeP1 && mensagemAcao.includes(`em ${nomeP1}`) && danoP1 > 0) criticoP1 = true;
+			if (nomeP2 && mensagemAcao.includes(`em ${nomeP2}`) && danoP2 > 0) criticoP2 = true;
 			if (!criticoP1 && !criticoP2) {
-				if (danoP1 > 0 && danoP2 <= 0) {
-					criticoP1 = true;
-				} else if (danoP2 > 0 && danoP1 <= 0) {
-					criticoP2 = true;
-				}
+				if (danoP1 > 0 && danoP2 <= 0) criticoP1 = true;
+				else if (danoP2 > 0 && danoP1 <= 0) criticoP2 = true;
 			}
 		}
 
@@ -255,123 +218,229 @@
 		mostrarNumeroFlutuante("p2", curaP2, "heal");
 	}
 
-	function limparSpritesTemporarios() {
-		state.spriteTemporario.player1 = null;
-		state.spriteTemporario.player2 = null;
-	}
-
-	function limparOverlaysFighter(lado) {
-		const fighter = lado === "player1" ? els.fighters.p1.root : els.fighters.p2.root;
-		if (!fighter) {
-			return;
-		}
-
-		fighter.querySelectorAll(".fighter-action-overlay").forEach((el) => el.remove());
-	}
-
-	function limparOverlaysArena() {
-		if (!els.arena) {
-			return;
-		}
-
-		els.arena.querySelectorAll(".arena-action-overlay").forEach((el) => el.remove());
-	}
-
-	function limparTimersAnimacao(lado) {
-		const timers = state.animationTimers[lado] || [];
-		timers.forEach((timerId) => clearTimeout(timerId));
-		state.animationTimers[lado] = [];
-		limparOverlaysFighter(lado);
-		limparOverlaysArena();
-	}
-
-	function limparTodosTimersAnimacao() {
-		limparTimersAnimacao("player1");
-		limparTimersAnimacao("player2");
-	}
-
-	function limparTimerPreviewDominio() {
-		if (state.domainPreviewTimerId !== null) {
-			clearTimeout(state.domainPreviewTimerId);
-			state.domainPreviewTimerId = null;
-		}
-	}
-
-	function limparTimerEfeitosDominio() {
-		if (state.domainEffectsTimerId !== null) {
-			clearTimeout(state.domainEffectsTimerId);
-			state.domainEffectsTimerId = null;
-		}
-	}
-
-	function limparPreviewDominio() {
-		limparTimerPreviewDominio();
-		limparTimerEfeitosDominio();
-		state.domainPreviewType = null;
-		state.domainEffectsStartAt = 0;
-	}
-
-	function limparEstadoTemporarioCombate() {
-		limparSpritesTemporarios();
-		limparPreviewDominio();
-	}
-
 	function esperar(ms) {
-		if (ms <= 0) {
-			return Promise.resolve();
-		}
-
-		return new Promise((resolve) => {
-			setTimeout(resolve, ms);
-		});
+		if (ms <= 0) return Promise.resolve();
+		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
 
-	function mostrarSplashErroInsano(duracaoMs = 3000) {
+	function mostrarSplashErroInsano(src, duracaoMs = 3000) {
 		return new Promise((resolve) => {
 			const overlay = document.createElement("div");
-			overlay.style.position = "fixed";
-			overlay.style.inset = "0";
-			overlay.style.zIndex = "99999";
-			overlay.style.background = "rgba(0, 0, 0, 0.8)";
-			overlay.style.display = "flex";
-			overlay.style.alignItems = "center";
-			overlay.style.justifyContent = "center";
+			overlay.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center";
 
 			const img = document.createElement("img");
-			img.src = SPRITE_ERRO_INSANO;
+			img.src = src;
 			img.alt = "ERRO INSANO";
-			img.style.maxWidth = "95vw";
-			img.style.maxHeight = "95vh";
-			img.style.width = "auto";
-			img.style.height = "auto";
+			img.style.cssText = "max-width:95vw;max-height:95vh;width:auto;height:auto";
 
 			overlay.appendChild(img);
 			document.body.appendChild(overlay);
-
-			setTimeout(() => {
-				overlay.remove();
-				resolve();
-			}, duracaoMs);
+			setTimeout(() => { overlay.remove(); resolve(); }, duracaoMs);
 		});
 	}
 
-	function obterLayerCortesDominio() {
-		if (!els.arena) {
-			return null;
+	// =========================================================
+	// Núcleo de animação — Timeline
+	// =========================================================
+
+	// Recebe lista de { at: ms, run: fn } e agenda todos via setTimeout.
+	// Retorna { duration, cancel } — cancel() limpa todos os timers pendentes.
+	function runTimeline(events) {
+		if (!events.length) return { duration: 0, cancel() {} };
+		const handles = events.map(({ at, run }) => setTimeout(run, at));
+		const duration = events.reduce((max, e) => Math.max(max, e.at), 0);
+		return {
+			duration,
+			cancel() { handles.forEach(clearTimeout); },
+		};
+	}
+
+	// Cancela animação em andamento e limpa todo estado visual temporário.
+	// Substitui: limparTimersAnimacao, limparOverlaysFighter, limparOverlaysArena,
+	//            limparTodosTimersAnimacao, limparPreviewDominio, limparSpritesTemporarios.
+	function cancelAnimation() {
+		state.anim?.cancel();
+		state.anim = null;
+		state.sprites.p1 = null;
+		state.sprites.p2 = null;
+		state.domainArenaClass = null;
+		state.domainCutsActive = false;
+		limparCortesDominioSukuna();
+		document.querySelectorAll(".arena-action-overlay, .arena-energy-beam, .fighter-action-overlay")
+			.forEach((el) => el.remove());
+	}
+
+	// =========================================================
+	// Construtores de eventos de animação
+	// =========================================================
+
+	// Transforma um array de frames em eventos de timeline para um jogador.
+	// Cada frame troca o sprite temporário e chama atualizarHUD.
+	function buildFrameEvents(chaveJogador, frames) {
+		if (!frames.length) return [];
+		const events = [];
+		let t = 0;
+		for (const frame of frames) {
+			const sprite = frame.sprite;
+			events.push({ at: t, run() { state.sprites[chaveJogador] = sprite; atualizarHUD(); } });
+			t += frame.durationMs;
+		}
+		// Sentinel: marca o fim real da sequência para runTimeline calcular a duração correta.
+		// Sem isso, duration = at do último frame (início), não at + durationMs (fim).
+		events.push({ at: t, run() {} });
+		return events;
+	}
+
+	// Calcula posições e ângulos para projéteis e beams entre dois fighters.
+	function calcularPosicoes(overlay, atacanteKey, origemEl, alvoEl, arenaRect) {
+		const direcaoFrente = atacanteKey === "p1" ? 1 : -1;
+		const escalaHorizontal = atacanteKey === "p2" ? -1 : 1;
+		const anguloProjetil = atacanteKey === "p2" ? -overlay.projectileAngleDeg : overlay.projectileAngleDeg;
+		const origemRect = origemEl.getBoundingClientRect();
+		const alvoRect = alvoEl.getBoundingClientRect();
+		const origemX = (origemRect.left + origemRect.width / 2) - arenaRect.left + direcaoFrente * overlay.frontOffsetPx + overlay.startOffsetX;
+		const origemY = (origemRect.top + origemRect.height / 2) - arenaRect.top + overlay.startOffsetY;
+		const alvoX = (alvoRect.left + alvoRect.width / 2) - arenaRect.left + overlay.endOffsetX;
+		const alvoY = (alvoRect.top + alvoRect.height / 2) - arenaRect.top + overlay.endOffsetY;
+		const deltaX = alvoX - origemX;
+		const deltaY = alvoY - origemY;
+		return {
+			origemX, origemY, alvoX, alvoY,
+			distancia: Math.sqrt(deltaX * deltaX + deltaY * deltaY),
+			anguloAuto: Math.atan2(deltaY, deltaX) * (180 / Math.PI),
+			anguloProjetil, escalaHorizontal,
+		};
+	}
+
+	// Cada criador recebe apenas o que precisa — sem setup duplicado.
+
+	function criarBeamEl(overlay, pos) {
+		const el = document.createElement("div");
+		el.className = "arena-energy-beam";
+		if (overlay.beamTone === "dark") el.classList.add("arena-energy-beam-dark");
+		else if (overlay.beamTone === "pink") el.classList.add("arena-energy-beam-pink");
+		el.setAttribute("aria-hidden", "true");
+		el.style.cssText = `left:${pos.origemX}px;top:${pos.origemY}px;height:${overlay.thicknessPx}px;width:0px;transform:translate(0,-50%) rotate(${pos.anguloAuto}deg);transition:width ${overlay.durationMs}ms ease-out`;
+		els.arena.appendChild(el);
+		requestAnimationFrame(() => { el.style.width = `${pos.distancia}px`; });
+		return el;
+	}
+
+	function criarProjectileEl(overlay, pos) {
+		const el = document.createElement("img");
+		el.className = "arena-action-overlay";
+		el.src = overlay.sprite;
+		el.alt = "";
+		el.setAttribute("aria-hidden", "true");
+		el.style.cssText = `width:${overlay.sizePx}px;left:${pos.origemX}px;top:${pos.origemY}px;transform:translate(-50%,-50%) scaleX(${pos.escalaHorizontal}) rotate(${pos.anguloProjetil}deg);transition:left ${overlay.durationMs}ms linear,top ${overlay.durationMs}ms linear`;
+		els.arena.appendChild(el);
+		requestAnimationFrame(() => { el.style.left = `${pos.alvoX}px`; el.style.top = `${pos.alvoY}px`; });
+		return el;
+	}
+
+	function criarAttachedEl(overlay, alvoKey) {
+		const fighter = els.fighters[alvoKey]?.root;
+		if (!fighter) return null;
+		const el = document.createElement("img");
+		el.className = "fighter-action-overlay";
+		el.src = overlay.sprite;
+		el.alt = "";
+		el.setAttribute("aria-hidden", "true");
+		el.style.transform = `translate(${overlay.x}px,${overlay.y}px) scale(${overlay.scale})`;
+		fighter.appendChild(el);
+		return el;
+	}
+
+	// Ponto central de criação: resolve alvo, computa geometria (uma única vez para
+	// beam/projectile) e delega ao criador correto. Cada criador só faz DOM.
+	function criarOverlayEl(overlay, atacanteKey) {
+		const alvoKey = overlay.target === "self" ? atacanteKey : (atacanteKey === "p1" ? "p2" : "p1");
+
+		if (overlay.mode !== "beam" && overlay.mode !== "projectile") {
+			return criarAttachedEl(overlay, alvoKey);
 		}
 
+		const arenaRect = els.arena?.getBoundingClientRect();
+		const origemEl = els.fighters[atacanteKey]?.root;
+		const alvoEl   = els.fighters[alvoKey]?.root;
+		if (!arenaRect || !origemEl || !alvoEl) return null;
+
+		const pos = calcularPosicoes(overlay, atacanteKey, origemEl, alvoEl, arenaRect);
+		if (overlay.mode === "beam") return criarBeamEl(overlay, pos);
+		return criarProjectileEl(overlay, pos);
+	}
+
+	// Gera par de eventos [criar, remover] para um overlay na timeline.
+	function buildOverlayEvents(overlay, atacanteKey) {
+		let el = null;
+		return [
+			{ at: overlay.startMs, run() { el = criarOverlayEl(overlay, atacanteKey); } },
+			{ at: overlay.startMs + overlay.durationMs, run() { el?.remove(); el = null; } },
+		];
+	}
+
+	// Gera eventos de domain a partir do config PHP — sem hardcode de personagens.
+	// Ativado por qualquer ação que declare 'domainArenaClass' no seu visual config.
+	function buildDomainEvents(atacanteKey, nomeAcao) {
+		const actionConfig = state.serverState?.[atacanteKey]?.visual?.actions?.[nomeAcao] ?? {};
+		const arenaClass = actionConfig.domainArenaClass ?? null;
+		if (!arenaClass) return [];
+
+		const delay = Number(actionConfig.domainDelayMs) > 0 ? Number(actionConfig.domainDelayMs) : 0;
+		const cutsDelay = Number(actionConfig.domainCutsDelayMs) > 0 ? Number(actionConfig.domainCutsDelayMs) : null;
+
+		const events = [
+			{ at: delay, run() { state.domainArenaClass = arenaClass; atualizarHUD(); } },
+		];
+
+		if (cutsDelay !== null) {
+			events.push({
+				at: delay + cutsDelay,
+				run() { state.domainCutsActive = true; atualizarHUD(); },
+			});
+		}
+
+		return events;
+	}
+
+	// Monta toda a timeline de uma ação: frames do atacante, reação do defensor,
+	// overlays e efeitos de domain. Retorna o array de eventos para runTimeline.
+	function buildAnimation(atacanteKey, acao, defensorKey, defensorEstaDefendendo) {
+		const nomeAcao = acao.nomeSprite || acao.nome;
+		const events = [];
+
+		events.push(...buildFrameEvents(atacanteKey, obterFramesAnimacaoAcao(atacanteKey, nomeAcao)));
+
+		if (acao.targetsOpponent && defensorEstaDefendendo) {
+			events.push(...buildFrameEvents(defensorKey, obterFramesReacaoDefesa(defensorKey)));
+		}
+
+		for (const overlay of obterOverlaysAnimacaoAcao(atacanteKey, nomeAcao)) {
+			events.push(...buildOverlayEvents(overlay, atacanteKey));
+		}
+
+		events.push(...buildDomainEvents(atacanteKey, nomeAcao));
+
+		return events;
+	}
+
+	// =========================================================
+	// Cortes do Domain do Sukuna (setInterval próprio)
+	// =========================================================
+
+	function obterLayerCortesDominio() {
+		if (!els.arena) return null;
 		let layer = els.arena.querySelector(".domain-cuts-layer");
 		if (!layer) {
 			layer = document.createElement("div");
 			layer.className = "domain-cuts-layer";
 			els.arena.appendChild(layer);
 		}
-
 		return layer;
 	}
 
 	function limparCortesDominioSukuna() {
-		state.domainCutsTimeouts.forEach((timerId) => clearTimeout(timerId));
+		state.domainCutsTimeouts.forEach((id) => clearTimeout(id));
 		state.domainCutsTimeouts = [];
 
 		if (state.domainCutsIntervalId !== null) {
@@ -380,16 +449,12 @@
 		}
 
 		const layer = els.arena?.querySelector(".domain-cuts-layer");
-		if (layer) {
-			layer.innerHTML = "";
-		}
+		if (layer) layer.innerHTML = "";
 	}
 
 	function criarCorteAleatorioDominioSukuna() {
 		const layer = obterLayerCortesDominio();
-		if (!layer || !SPRITES_CORTES_DOMINIO_SUKUNA.length) {
-			return;
-		}
+		if (!layer || !SPRITES_CORTES_DOMINIO_SUKUNA.length) return;
 
 		const sprite = SPRITES_CORTES_DOMINIO_SUKUNA[Math.floor(Math.random() * SPRITES_CORTES_DOMINIO_SUKUNA.length)];
 		const corte = document.createElement("img");
@@ -403,10 +468,7 @@
 		corte.style.transform = `translate(-50%, -50%) rotate(${Math.floor(Math.random() * 360)}deg)`;
 		layer.appendChild(corte);
 
-		const timeoutId = setTimeout(() => {
-			corte.remove();
-		}, 260 + Math.floor(Math.random() * 240));
-
+		const timeoutId = setTimeout(() => corte.remove(), 260 + Math.floor(Math.random() * 240));
 		state.domainCutsTimeouts.push(timeoutId);
 	}
 
@@ -415,71 +477,69 @@
 			limparCortesDominioSukuna();
 			return;
 		}
-
-		if (state.domainCutsIntervalId !== null) {
-			return;
-		}
+		if (state.domainCutsIntervalId !== null) return;
 
 		criarCorteAleatorioDominioSukuna();
 		state.domainCutsIntervalId = setInterval(() => {
 			const quantidade = 1 + Math.floor(Math.random() * 2);
-			for (let i = 0; i < quantidade; i++) {
-				criarCorteAleatorioDominioSukuna();
-			}
+			for (let i = 0; i < quantidade; i++) criarCorteAleatorioDominioSukuna();
 		}, 30);
 	}
 
-	function aplicarVisualPersonagem(personagem, fighterRefs, spriteTemporario = null) {
-		if (!fighterRefs?.root || !fighterRefs.img) {
-			return;
-		}
+	// =========================================================
+	// Renderização visual
+	// =========================================================
 
+	function aplicarVisualPersonagem(chaveJogador, personagem, fighterRefs) {
+		if (!fighterRefs?.root || !fighterRefs.img) return;
+
+		const spriteTemporario = state.sprites[chaveJogador];
 		const nomeClasse = personagem?.classe || "";
 		const spriteBase = personagem?.visual?.baseSprite || null;
 		const fighterEl = fighterRefs.root;
 		const img = fighterRefs.img;
 		const initial = fighterRefs.initial;
 
-		fighterEl.classList.remove("has-image", "is-flipped");
-		fighterEl.classList.remove("action-casting");
-		fighterEl.classList.remove("true-cero-sized");
-		fighterEl.classList.remove("true-cero-plus-sized");
-		fighterEl.classList.remove("ubuntu-base-smaller");
+		fighterEl.classList.remove("has-image", "is-flipped", "action-casting", "true-cero-sized", "true-cero-plus-sized", "ubuntu-base-smaller");
 		img.removeAttribute("src");
 
 		if (spriteTemporario) {
 			img.src = spriteTemporario;
 			fighterEl.classList.add("has-image", "action-casting");
-
 			if (spriteTemporario.endsWith("/ciferfinalform.png") || spriteTemporario.endsWith("/ciferfinalcero.png")) {
 				fighterEl.classList.add("true-cero-sized");
 			}
-
 			if (spriteTemporario.endsWith("/ciferfinalcero.png")) {
 				fighterEl.classList.add("true-cero-plus-sized");
 			}
-
 			atualizarClasseFlipDoFighter(fighterEl);
-
 			img.onerror = () => fighterEl.classList.remove("has-image", "is-flipped", "action-casting");
-			if (initial) {
-				initial.textContent = (nomeClasse || "?").trim().charAt(0).toUpperCase() || "?";
-			}
+			if (initial) initial.textContent = (nomeClasse || "?").trim().charAt(0).toUpperCase() || "?";
 			return;
 		}
 
 		if (spriteBase) {
 			img.src = spriteBase;
 			fighterEl.classList.add("has-image");
-			if ((nomeClasse || "").toLowerCase() === "ubuntu") {
-				fighterEl.classList.add("ubuntu-base-smaller");
-			}
+			if (nomeClasse.toLowerCase() === "ubuntu") fighterEl.classList.add("ubuntu-base-smaller");
 			atualizarClasseFlipDoFighter(fighterEl);
 		}
 
 		img.onerror = () => fighterEl.classList.remove("has-image", "is-flipped");
-		if (initial) {
-			initial.textContent = (personagem?.classeNome || "?").trim().charAt(0).toUpperCase() || "?";
+		if (initial) initial.textContent = (personagem?.classeNome || "?").trim().charAt(0).toUpperCase() || "?";
+	}
+
+	// Troca a classe de domain da arena sem precisar saber quais classes existem.
+	// Usa dataset.domainClass para rastrear o que foi aplicado e remover na troca.
+	function setArenaDomain(arenaClass) {
+		const atual = els.arena?.dataset.domainClass || null;
+		if (atual === arenaClass) return;
+		if (atual) els.arena.classList.remove(atual);
+		if (arenaClass) {
+			els.arena.classList.add(arenaClass);
+			els.arena.dataset.domainClass = arenaClass;
+		} else {
+			delete els.arena.dataset.domainClass;
 		}
 	}
 
@@ -498,13 +558,11 @@
 			els.winnerOverlay.classList.add("hidden");
 			return;
 		}
-
 		const vencedor = server.winner === "p1" ? server.p1 : server.p2;
 		const labelVencedor = server.winner === "p1" ? "Jogador 1" : "Jogador 2";
 		const spriteVitoria = vencedor?.visual?.winImage || vencedor?.visual?.baseSprite || "";
 
 		els.winnerText.textContent = `${labelVencedor} (${vencedor.nome}) venceu!`;
-
 		if (spriteVitoria) {
 			els.winnerSprite.src = spriteVitoria;
 			els.winnerSprite.style.display = "block";
@@ -512,34 +570,31 @@
 			els.winnerSprite.removeAttribute("src");
 			els.winnerSprite.style.display = "none";
 		}
-
 		els.winnerOverlay.classList.remove("hidden");
 	}
 
 	function atualizarHUD() {
 		const server = state.serverState;
 		if (!server || !server.started) {
-			els.arena.classList.remove("domain-active");
-			els.arena.classList.remove("sukuna-domain-active");
+			setArenaDomain(null);
 			atualizarEfeitoCortesDominioSukuna(false);
 			els.winnerOverlay.classList.add("hidden");
 			return;
 		}
 
-		const previewSukunaAtivo = state.domainPreviewType === "sukuna";
-		const previewGojoAtivo = state.domainPreviewType === "gojo";
-		const dominioGojoAtivo = !previewSukunaAtivo && (previewGojoAtivo || (server.domainTurnsRemaining || 0) > 0);
-		const cortesDominioPermitidos = previewSukunaAtivo && Date.now() >= (state.domainEffectsStartAt || 0);
-
-		els.arena.classList.toggle("domain-active", dominioGojoAtivo);
-		els.arena.classList.toggle("sukuna-domain-active", previewSukunaAtivo);
-		atualizarEfeitoCortesDominioSukuna(cortesDominioPermitidos);
+		// Classe ativa: preview tem prioridade; se não houver, usa o domain server-ativo.
+		// A classe vem do PHP (visual.actions.Domain.domainArenaClass) — sem hardcode de personagens.
+		let domainClass = state.domainArenaClass;
+		if (!domainClass && (server.domainTurnsRemaining || 0) > 0 && server.domainCasterKey) {
+			domainClass = server[server.domainCasterKey]?.visual?.actions?.["Domain"]?.domainArenaClass ?? null;
+		}
+		setArenaDomain(domainClass);
+		atualizarEfeitoCortesDominioSukuna(state.domainCutsActive);
 
 		atualizarCardStatus(server.p2, els.cards.enemy);
 		atualizarCardStatus(server.p1, els.cards.player);
-
-		aplicarVisualPersonagem(server.p2, els.fighters.p2, state.spriteTemporario.player2);
-		aplicarVisualPersonagem(server.p1, els.fighters.p1, state.spriteTemporario.player1);
+		aplicarVisualPersonagem("p2", server.p2, els.fighters.p2);
+		aplicarVisualPersonagem("p1", server.p1, els.fighters.p1);
 
 		if (server.winner) {
 			els.turnInfo.textContent = `${server.winner === "p1" ? "Jogador 1" : "Jogador 2"} venceu!`;
@@ -548,21 +603,18 @@
 		}
 
 		els.winnerOverlay.classList.add("hidden");
-
 		const jogadorDaVez = server.currentKey === "p1" ? "Jogador 1" : "Jogador 2";
 		const nomeDaVez = server.currentKey === "p1" ? server.p1.nome : server.p2.nome;
 		els.turnInfo.textContent = `Turno ${server.turno} • ${jogadorDaVez} (${nomeDaVez})`;
 	}
 
-	function obterChaveLado(chaveJogador) {
-		return chaveJogador === "p1" ? "player1" : "player2";
-	}
+	// =========================================================
+	// Leitura de dados de animação do serverState
+	// =========================================================
 
 	function obterFramesAnimacao(chaveJogador, caminho, nome) {
 		const server = state.serverState;
-		if (!server || !server[chaveJogador]) {
-			return [];
-		}
+		if (!server || !server[chaveJogador]) return [];
 
 		const raiz = caminho === "actions"
 			? server[chaveJogador].visual?.actions || {}
@@ -570,12 +622,11 @@
 
 		const alvo = raiz[nome];
 		const frames = Array.isArray(alvo?.frames) ? alvo.frames : [];
-
 		return frames
-			.filter((frame) => frame && typeof frame.sprite === "string" && frame.sprite.trim() !== "")
-			.map((frame) => ({
-				sprite: frame.sprite,
-				durationMs: Number(frame.durationMs) > 0 ? Number(frame.durationMs) : 0,
+			.filter((f) => f && typeof f.sprite === "string" && f.sprite.trim() !== "")
+			.map((f) => ({
+				sprite: f.sprite,
+				durationMs: Number(f.durationMs) > 0 ? Number(f.durationMs) : 0,
 			}));
 	}
 
@@ -585,47 +636,35 @@
 
 	function obterOverlaysAnimacaoAcao(chaveJogador, nomeAcao) {
 		const server = state.serverState;
-		if (!server || !server[chaveJogador]) {
-			return [];
-		}
+		if (!server || !server[chaveJogador]) return [];
 
 		const actionConfig = server[chaveJogador].visual?.actions?.[nomeAcao];
 		const overlays = Array.isArray(actionConfig?.overlays) ? actionConfig.overlays : [];
 
 		return overlays
-			.filter((overlay) => {
-				if (!overlay) {
-					return false;
-				}
-
-				if (overlay.mode === "beam") {
-					return true;
-				}
-
-				return typeof overlay.sprite === "string" && overlay.sprite.trim() !== "";
+			.filter((o) => {
+				if (!o) return false;
+				if (o.mode === "beam") return true;
+				return typeof o.sprite === "string" && o.sprite.trim() !== "";
 			})
-			.map((overlay) => ({
-				mode: overlay.mode === "projectile"
-					? "projectile"
-					: (overlay.mode === "beam" ? "beam" : "attached"),
-				beamTone: overlay.beamTone === "dark"
-					? "dark"
-					: (overlay.beamTone === "pink" ? "pink" : "normal"),
-				target: overlay.target === "self" ? "self" : "opponent",
-				sprite: typeof overlay.sprite === "string" ? overlay.sprite : "",
-				startMs: Number(overlay.startMs) > 0 ? Number(overlay.startMs) : 0,
-				durationMs: Number(overlay.durationMs) > 0 ? Number(overlay.durationMs) : 0,
-				x: Number.isFinite(Number(overlay.x)) ? Number(overlay.x) : 0,
-				y: Number.isFinite(Number(overlay.y)) ? Number(overlay.y) : 0,
-				scale: Number(overlay.scale) > 0 ? Number(overlay.scale) : 1,
-				sizePx: Number(overlay.sizePx) > 0 ? Number(overlay.sizePx) : 260,
-				frontOffsetPx: Number.isFinite(Number(overlay.frontOffsetPx)) ? Number(overlay.frontOffsetPx) : 0,
-				projectileAngleDeg: Number.isFinite(Number(overlay.projectileAngleDeg)) ? Number(overlay.projectileAngleDeg) : 0,
-				thicknessPx: Number(overlay.thicknessPx) > 0 ? Number(overlay.thicknessPx) : 26,
-				startOffsetX: Number.isFinite(Number(overlay.startOffsetX)) ? Number(overlay.startOffsetX) : 0,
-				startOffsetY: Number.isFinite(Number(overlay.startOffsetY)) ? Number(overlay.startOffsetY) : 0,
-				endOffsetX: Number.isFinite(Number(overlay.endOffsetX)) ? Number(overlay.endOffsetX) : 0,
-				endOffsetY: Number.isFinite(Number(overlay.endOffsetY)) ? Number(overlay.endOffsetY) : 0,
+			.map((o) => ({
+				mode: o.mode === "projectile" ? "projectile" : (o.mode === "beam" ? "beam" : "attached"),
+				beamTone: o.beamTone === "dark" ? "dark" : (o.beamTone === "pink" ? "pink" : "normal"),
+				target: o.target === "self" ? "self" : "opponent",
+				sprite: typeof o.sprite === "string" ? o.sprite : "",
+				startMs: Number(o.startMs) > 0 ? Number(o.startMs) : 0,
+				durationMs: Number(o.durationMs) > 0 ? Number(o.durationMs) : 0,
+				x: Number.isFinite(Number(o.x)) ? Number(o.x) : 0,
+				y: Number.isFinite(Number(o.y)) ? Number(o.y) : 0,
+				scale: Number(o.scale) > 0 ? Number(o.scale) : 1,
+				sizePx: Number(o.sizePx) > 0 ? Number(o.sizePx) : 260,
+				frontOffsetPx: Number.isFinite(Number(o.frontOffsetPx)) ? Number(o.frontOffsetPx) : 0,
+				projectileAngleDeg: Number.isFinite(Number(o.projectileAngleDeg)) ? Number(o.projectileAngleDeg) : 0,
+				thicknessPx: Number(o.thicknessPx) > 0 ? Number(o.thicknessPx) : 26,
+				startOffsetX: Number.isFinite(Number(o.startOffsetX)) ? Number(o.startOffsetX) : 0,
+				startOffsetY: Number.isFinite(Number(o.startOffsetY)) ? Number(o.startOffsetY) : 0,
+				endOffsetX: Number.isFinite(Number(o.endOffsetX)) ? Number(o.endOffsetX) : 0,
+				endOffsetY: Number.isFinite(Number(o.endOffsetY)) ? Number(o.endOffsetY) : 0,
 			}));
 	}
 
@@ -633,182 +672,10 @@
 		return obterFramesAnimacao(chaveJogador, "reactions", "defendingHit");
 	}
 
-	function obterTipoPreviewDominio(chaveJogador, nomeAcao) {
-		if (nomeAcao !== "Domain") {
-			return null;
-		}
 
-		const classe = (state.serverState?.[chaveJogador]?.classe || "").toLowerCase();
-		if (classe === "gojo") {
-			return "gojo";
-		}
-
-		if (classe === "sukuna") {
-			return "sukuna";
-		}
-
-		return null;
-	}
-
-	function obterDelayDominio(chaveJogador, nomeAcao) {
-		if (nomeAcao !== "Domain") {
-			return 0;
-		}
-
-		const actionConfig = state.serverState?.[chaveJogador]?.visual?.actions?.[nomeAcao] || {};
-		const domainDelayMs = Number(actionConfig.domainDelayMs);
-
-		return Number.isFinite(domainDelayMs) && domainDelayMs > 0 ? domainDelayMs : 0;
-	}
-
-	function executarAnimacaoFrames(lado, frames, duracaoPadrao = 0) {
-		limparTimersAnimacao(lado);
-
-		if (!frames.length) {
-			return duracaoPadrao;
-		}
-
-		let acumulado = 0;
-		frames.forEach((frame) => {
-			const inicioFrame = acumulado;
-			const timerId = setTimeout(() => {
-				state.spriteTemporario[lado] = frame.sprite;
-				atualizarHUD();
-			}, inicioFrame);
-			state.animationTimers[lado].push(timerId);
-			acumulado += frame.durationMs;
-		});
-
-		return acumulado > 0 ? acumulado : duracaoPadrao;
-	}
-
-	function executarOverlaysAnimacao(atacanteKey, overlays) {
-		if (!Array.isArray(overlays) || overlays.length === 0) {
-			return 0;
-		}
-
-		let tempoTotal = 0;
-		const arenaRect = els.arena?.getBoundingClientRect();
-
-		overlays.forEach((overlay) => {
-			const alvoKey = overlay.target === "self"
-				? atacanteKey
-				: (atacanteKey === "p1" ? "p2" : "p1");
-			const ladoAlvo = obterChaveLado(alvoKey);
-			const fighter = ladoAlvo === "player1" ? els.fighters.p1.root : els.fighters.p2.root;
-
-			if (!fighter) {
-				return;
-			}
-
-			const inicio = overlay.startMs;
-			const duracao = overlay.durationMs;
-			tempoTotal = Math.max(tempoTotal, inicio + duracao);
-
-			if (overlay.mode === "projectile" || overlay.mode === "beam") {
-				const fighterOrigem = atacanteKey === "p1" ? els.fighters.p1.root : els.fighters.p2.root;
-				const fighterAlvo = alvoKey === "p1" ? els.fighters.p1.root : els.fighters.p2.root;
-
-				if (!arenaRect || !fighterOrigem || !fighterAlvo) {
-					return;
-				}
-
-				const origemRect = fighterOrigem.getBoundingClientRect();
-				const alvoRect = fighterAlvo.getBoundingClientRect();
-				const direcaoFrente = atacanteKey === "p1" ? 1 : -1;
-				const escalaHorizontal = atacanteKey === "p2" ? -1 : 1;
-				const anguloProjetil = atacanteKey === "p2"
-					? (-1 * overlay.projectileAngleDeg)
-					: overlay.projectileAngleDeg;
-
-				const origemX = (origemRect.left + origemRect.width / 2) - arenaRect.left + (direcaoFrente * overlay.frontOffsetPx) + overlay.startOffsetX;
-				const origemY = (origemRect.top + origemRect.height / 2) - arenaRect.top + overlay.startOffsetY;
-				const alvoX = (alvoRect.left + alvoRect.width / 2) - arenaRect.left + overlay.endOffsetX;
-				const alvoY = (alvoRect.top + alvoRect.height / 2) - arenaRect.top + overlay.endOffsetY;
-				const deltaX = alvoX - origemX;
-				const deltaY = alvoY - origemY;
-				const distancia = Math.sqrt((deltaX * deltaX) + (deltaY * deltaY));
-				const anguloAuto = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-
-				const timerInicioProjetil = setTimeout(() => {
-					if (overlay.mode === "beam") {
-						const beamEl = document.createElement("div");
-						beamEl.className = "arena-energy-beam";
-						if (overlay.beamTone === "dark") {
-							beamEl.classList.add("arena-energy-beam-dark");
-						} else if (overlay.beamTone === "pink") {
-							beamEl.classList.add("arena-energy-beam-pink");
-						}
-						beamEl.setAttribute("aria-hidden", "true");
-						beamEl.style.left = `${origemX}px`;
-						beamEl.style.top = `${origemY}px`;
-						beamEl.style.height = `${overlay.thicknessPx}px`;
-						beamEl.style.width = "0px";
-						beamEl.style.transform = `translate(0, -50%) rotate(${anguloAuto}deg)`;
-						beamEl.style.transition = `width ${duracao}ms ease-out`;
-						els.arena?.appendChild(beamEl);
-
-						requestAnimationFrame(() => {
-							beamEl.style.width = `${distancia}px`;
-						});
-
-						const timerFimBeam = setTimeout(() => {
-							beamEl.remove();
-						}, duracao);
-
-						state.animationTimers[ladoAlvo].push(timerFimBeam);
-						return;
-					}
-
-					const projectileEl = document.createElement("img");
-					projectileEl.className = "arena-action-overlay";
-					projectileEl.src = overlay.sprite;
-					projectileEl.alt = "";
-					projectileEl.setAttribute("aria-hidden", "true");
-					projectileEl.style.width = `${overlay.sizePx}px`;
-					projectileEl.style.left = `${origemX}px`;
-					projectileEl.style.top = `${origemY}px`;
-					projectileEl.style.transform = `translate(-50%, -50%) scaleX(${escalaHorizontal}) rotate(${anguloProjetil}deg)`;
-					projectileEl.style.transition = `left ${duracao}ms linear, top ${duracao}ms linear`;
-					els.arena?.appendChild(projectileEl);
-
-					requestAnimationFrame(() => {
-						projectileEl.style.left = `${alvoX}px`;
-						projectileEl.style.top = `${alvoY}px`;
-					});
-
-					const timerFimProjetil = setTimeout(() => {
-						projectileEl.remove();
-					}, duracao);
-
-					state.animationTimers[ladoAlvo].push(timerFimProjetil);
-				}, inicio);
-
-				state.animationTimers[ladoAlvo].push(timerInicioProjetil);
-				return;
-			}
-
-			const timerInicio = setTimeout(() => {
-				const overlayEl = document.createElement("img");
-				overlayEl.className = "fighter-action-overlay";
-				overlayEl.src = overlay.sprite;
-				overlayEl.alt = "";
-				overlayEl.setAttribute("aria-hidden", "true");
-				overlayEl.style.transform = `translate(${overlay.x}px, ${overlay.y}px) scale(${overlay.scale})`;
-				fighter.appendChild(overlayEl);
-
-				const timerFim = setTimeout(() => {
-					overlayEl.remove();
-				}, duracao);
-
-				state.animationTimers[ladoAlvo].push(timerFim);
-			}, inicio);
-
-			state.animationTimers[ladoAlvo].push(timerInicio);
-		});
-
-		return tempoTotal;
-	}
+	// =========================================================
+	// Menu de ações
+	// =========================================================
 
 	function setBotoesAcaoHabilitados(habilitado) {
 		Array.from(els.menu.querySelectorAll("button")).forEach((btn) => {
@@ -818,20 +685,14 @@
 				btn.disabled = !habilitado || totalPaginas <= 1;
 				return;
 			}
-
-			if (btn.textContent.trim() !== "-") {
-				btn.disabled = !habilitado;
-			}
+			if (btn.textContent.trim() !== "-") btn.disabled = !habilitado;
 		});
 	}
 
 	function montarAcoes() {
 		els.menu.innerHTML = "";
 		const server = state.serverState;
-
-		if (!server || !server.started || server.winner) {
-			return;
-		}
+		if (!server || !server.started || server.winner) return;
 
 		const acoes = (server.availableActions || []).map((acao) => ({
 			...acao,
@@ -840,16 +701,13 @@
 		}));
 
 		const totalPaginas = Math.max(1, Math.ceil(acoes.length / ACOES_POR_PAGINA));
-		if (state.actionPage >= totalPaginas) {
-			state.actionPage = 0;
-		}
+		if (state.actionPage >= totalPaginas) state.actionPage = 0;
 
 		const inicio = state.actionPage * ACOES_POR_PAGINA;
 		const acoesPagina = acoes.slice(inicio, inicio + ACOES_POR_PAGINA);
-		while (acoesPagina.length < ACOES_POR_PAGINA) {
-			acoesPagina.push({ nome: "-", type: null });
-		}
+		while (acoesPagina.length < ACOES_POR_PAGINA) acoesPagina.push({ nome: "-", type: null });
 
+		// Layout: [acao0] [acao1] [→] [acao2]
 		const slots = [acoesPagina[0], acoesPagina[1], null, acoesPagina[2]];
 		slots.forEach((acao, slotIndex) => {
 			const btn = document.createElement("button");
@@ -879,7 +737,6 @@
 				btn.addEventListener("mouseleave", esconderPreviewSkill);
 				btn.addEventListener("focus", () => mostrarPreviewSkill(nomeAcao, descricaoAcao));
 				btn.addEventListener("blur", esconderPreviewSkill);
-
 				btn.addEventListener("click", () => processarAcaoComAnimacao(acao));
 			}
 
@@ -887,110 +744,69 @@
 		});
 	}
 
-	function obterElementoFighter(chaveJogador) {
-		return obterFighterRootPorChave(chaveJogador) || null;
-	}
+	// =========================================================
+	// Animações pós-resposta
+	// =========================================================
 
 	function animarEsquiva(chaveJogador) {
-		const fighter = obterElementoFighter(chaveJogador);
+		const fighter = obterFighterRootPorChave(chaveJogador);
 		if (!fighter) return;
 
-		const lado = obterChaveLado(chaveJogador);
-		const personagem = state.serverState?.[chaveJogador];
-		const classePersonagem = (personagem?.classe || "").toLowerCase();
-		const usaEsquivaEspecial = classePersonagem === "sans" || classePersonagem === "ubuntukiller";
-		const spriteEsquiva = classePersonagem === "ubuntukiller"
-			? SPRITE_ESQUIVA_UBUNTUKILLER
-			: SPRITE_ESQUIVA_SANS;
-		const spriteAnterior = state.spriteTemporario[lado];
+		// dodgeSprite vem do PHP via visual.dodgeSprite — elimina o hardcode de classe
+		const dodgeSprite = state.serverState?.[chaveJogador]?.visual?.dodgeSprite ?? null;
+		const spriteAnterior = state.sprites[chaveJogador];
 
-		if (usaEsquivaEspecial) {
-			state.spriteTemporario[lado] = spriteEsquiva;
+		if (dodgeSprite) {
+			state.sprites[chaveJogador] = dodgeSprite;
 			atualizarHUD();
 		}
 
 		fighter.classList.remove("dodge-anim");
-		void fighter.offsetWidth;
+		void fighter.offsetWidth; // força reflow para reiniciar a animação CSS
 		fighter.classList.add("dodge-anim");
 
 		setTimeout(() => {
 			fighter.classList.remove("dodge-anim");
-
-			if (usaEsquivaEspecial && state.spriteTemporario[lado] === spriteEsquiva) {
-				state.spriteTemporario[lado] = spriteAnterior;
+			if (dodgeSprite && state.sprites[chaveJogador] === dodgeSprite) {
+				state.sprites[chaveJogador] = spriteAnterior;
 				atualizarHUD();
 			}
 		}, 1200);
 	}
 
+	// =========================================================
+	// Loop principal de turno
+	// =========================================================
+
 	async function processarAcaoComAnimacao(acao) {
-		if (state.resolvendoAcao || !state.serverState || !state.serverState.started || state.serverState.winner) {
-			return;
-		}
+		if (state.resolvendoAcao || !state.serverState?.started || state.serverState.winner) return;
 
 		esconderPreviewSkill();
-
-		const atacanteKey = state.serverState.currentKey;
-		const defensorKey = atacanteKey === "p1" ? "p2" : "p1";
-		const ladoAtacante = obterChaveLado(atacanteKey);
-		const ladoDefensor = obterChaveLado(defensorKey);
-		const nomeAcao = acao.nomeSprite || acao.nome;
-		const ehErroUbuntu =
-			nomeAcao === "sudo apt install" &&
-			((state.serverState?.[atacanteKey]?.classe || "").toLowerCase() === "ubuntu");
-		const tipoPreviewDominio = obterTipoPreviewDominio(atacanteKey, nomeAcao);
-		const delayDominioMs = obterDelayDominio(atacanteKey, nomeAcao);
-		const framesAnimacao = obterFramesAnimacaoAcao(atacanteKey, nomeAcao);
-		const overlaysAnimacao = obterOverlaysAnimacaoAcao(atacanteKey, nomeAcao);
-		const defensorEstaDefendendo = state.serverState[defensorKey]?.defendendo === true;
-		const framesReacaoDefesa = acao.targetsOpponent && defensorEstaDefendendo
-			? obterFramesReacaoDefesa(defensorKey)
-			: [];
-
 		state.resolvendoAcao = true;
 		setBotoesAcaoHabilitados(false);
 
-		const duracaoAtaque = executarAnimacaoFrames(ladoAtacante, framesAnimacao, 0);
-		const duracaoDefesa = executarAnimacaoFrames(ladoDefensor, framesReacaoDefesa, 0);
-		const duracaoOverlays = executarOverlaysAnimacao(atacanteKey, overlaysAnimacao);
+		const atacanteKey = state.serverState.currentKey;
+		const defensorKey = atacanteKey === "p1" ? "p2" : "p1";
+		const defensorEstaDefendendo = state.serverState[defensorKey]?.defendendo === true;
+		// errorSplash lido aqui pois serverState muda após a resposta da API
+		const errorSplash = state.serverState[atacanteKey]?.visual?.errorSplash ?? null;
 
-		limparPreviewDominio();
-		if (tipoPreviewDominio) {
-			const atrasoExtraEfeitoDominio = tipoPreviewDominio === "sukuna"
-				? ATRASO_CORTES_DOMINIO_SUKUNA_MS
-				: 0;
-			state.domainEffectsStartAt = Date.now() + delayDominioMs + atrasoExtraEfeitoDominio;
-			state.domainEffectsTimerId = setTimeout(() => {
-				state.domainEffectsTimerId = null;
-				atualizarHUD();
-			}, delayDominioMs + atrasoExtraEfeitoDominio);
-			state.domainPreviewTimerId = setTimeout(() => {
-				state.domainPreviewType = tipoPreviewDominio;
-				state.domainPreviewTimerId = null;
-				atualizarHUD();
-			}, delayDominioMs);
-		}
-
-		const duracaoPreviewDominio = tipoPreviewDominio
-			? (delayDominioMs + (tipoPreviewDominio === "sukuna" ? ATRASO_CORTES_DOMINIO_SUKUNA_MS : 0))
-			: 0;
-		const tempoResolucao = Math.max(duracaoAtaque, duracaoDefesa, duracaoOverlays, duracaoPreviewDominio);
+		cancelAnimation();
+		state.anim = runTimeline(buildAnimation(atacanteKey, acao, defensorKey, defensorEstaDefendendo));
 
 		try {
-			await esperar(tempoResolucao);
+			await esperar(state.anim.duration);
 
 			const resposta = await chamarApi("action", {
 				actionType: acao.type,
 				skillIndex: typeof acao.skillIndex === "number" ? acao.skillIndex : null,
 			});
 
-			limparSpritesTemporarios();
+			cancelAnimation();
 			const mensagem = resposta.message || "Ação executada.";
 
-			if (resposta.state && resposta.state.started === false) {
-				if (ehErroUbuntu) {
-					await mostrarSplashErroInsano(3000);
-				}
+			if (resposta.state?.started === false) {
+				if (errorSplash) await mostrarSplashErroInsano(errorSplash, 3000);
 				resetarParaSetup();
 				adicionarLog(mensagem);
 				return;
@@ -998,17 +814,15 @@
 
 			if (resposta.state) {
 				aplicarNovoEstado(resposta.state, true);
+				if (mensagem.includes("desviou!") && acao.targetsOpponent) {
+					animarEsquiva(defensorKey);
+				}
 			}
 
-			limparPreviewDominio();
 			adicionarLog(mensagem);
 			atualizarHUD();
-
-			if (mensagem.includes("desviou!") && (acao.type === "attack" || acao.type === "skill")) {
-				animarEsquiva(atacanteKey === "p1" ? "p2" : "p1");
-			}
 		} catch (erro) {
-			limparEstadoTemporarioCombate();
+			cancelAnimation();
 			atualizarHUD();
 			adicionarLog(`Erro ao executar ação: ${erro.message || "falha desconhecida."}`);
 		} finally {
@@ -1019,21 +833,21 @@
 		}
 	}
 
+	// =========================================================
+	// Ciclo de vida do app
+	// =========================================================
+
 	function resetarParaSetup() {
 		state.serverState = null;
 		state.resolvendoAcao = false;
 		state.actionPage = 0;
-		limparPreviewDominio();
-		limparTodosTimersAnimacao();
-		limparCortesDominioSukuna();
-		limparSpritesTemporarios();
+		cancelAnimation();
 		esconderPreviewSkill();
 
 		els.battleView.classList.add("hidden");
 		els.setupPanel.classList.remove("hidden");
 		els.winnerOverlay.classList.add("hidden");
-		els.arena.classList.remove("domain-active");
-		els.arena.classList.remove("sukuna-domain-active");
+		setArenaDomain(null);
 
 		els.turnInfo.textContent = "Prepare a partida";
 		els.log.innerHTML = "";
@@ -1064,14 +878,11 @@
 			aplicarNovoEstado(resposta.state, false);
 			state.resolvendoAcao = false;
 			state.actionPage = 0;
-			limparPreviewDominio();
-			limparTodosTimersAnimacao();
-			limparSpritesTemporarios();
+			cancelAnimation();
 			esconderPreviewSkill();
 
 			els.setupPanel.classList.add("hidden");
 			els.battleView.classList.remove("hidden");
-
 			els.log.innerHTML = "";
 			adicionarLog(`Partida iniciada: ${state.serverState.p1.classeNome} vs ${state.serverState.p2.classeNome}.`);
 			atualizarHUD();

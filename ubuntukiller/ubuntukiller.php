@@ -72,6 +72,7 @@ class UbuntuKiller extends Personagem {
         return [
             'baseSprite' => './ubuntukiller/sprites/EUBASE.png',
             'winImage' => './ubuntukiller/sprites/EUWIN.png',
+            'dodgeSprite' => './ubuntukiller/sprites/ESQUIVO.png',
             'actions' => [
                 'ubuntubuxa' => [
                     'frames' => [
