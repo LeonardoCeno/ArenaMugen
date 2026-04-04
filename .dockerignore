@@ -1,0 +1,6 @@
+.git
+.gitignore
+.claude
+compose.yaml
+nginx.conf
+Dockerfile

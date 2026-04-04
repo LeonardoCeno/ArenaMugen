@@ -2,41 +2,56 @@
 
 Projeto de batalha por turnos com dois modos de execução:
 
-- Terminal (CLI) via `index.php`
-- Web via `batalha.html` + `web_api.php`
+- **Web** via `frontend/batalha.html` + `backend/web_api.php`
+- **Terminal (CLI)** via `backend/index.php`
 
-As regras de turno e ações foram centralizadas em `GameService.php` para evitar duplicação entre CLI e Web.
+## Rodar com Docker (recomendado)
 
-## Requisitos
-
-- PHP 8.1+
-
-## Executar no Terminal
+Requisitos: [Docker](https://docs.docker.com/get-docker/) instalado.
 
 ```bash
-php index.php
+docker compose up --build
 ```
 
-## Executar no Web
+Abra no navegador: `http://localhost:8080`
+
+## Rodar sem Docker
+
+Requisitos: PHP 8.2+
 
 ```bash
 php -S 127.0.0.1:8080
 ```
 
-Abra no navegador:
+Abra no navegador: `http://127.0.0.1:8080/frontend/batalha.html`
 
-- `http://127.0.0.1:8080/batalha.html`
+## Rodar no Terminal (CLI)
+
+```bash
+php backend/index.php
+```
 
 ## Estrutura
 
-- `Personagem.php`: classe base e mecânicas comuns
-- `sukunapasta/Sukuna.php`, `gojopasta/Gojo.php`, `sanspasta/Sans.php`: classes concretas
-- `GameService.php`: fluxo central de partida (turno, ação, estado)
-- `web_api.php`: camada HTTP/JSON para o front-end
-- `index.php`: interface de terminal reutilizando `GameService.php`
-- `batalha.html` / `batalha.css` / `app.js`: interface web
+```
+backend/
+  Personagem.php       # Classe base e mecânicas comuns
+  GameService.php      # Fluxo central de partida (turno, ação, estado)
+  web_api.php          # Camada HTTP/JSON para o frontend
+  index.php            # Interface de terminal
+  ExcecaoJogo.php      # Exceções do jogo
+  characters/          # Um subdiretório por personagem
+
+frontend/
+  batalha.html         # Interface web
+  batalha.css          # Estilos
+  app.js               # Orquestrador principal
+  ui-status.js         # HUD e ações
+  battle-animations.js # Engine de animações
+  assets/              # Sprites por personagem
+```
 
 ## Observações
 
-- As configurações visuais por personagem (sprite base e animações por ação) vêm das classes PHP e são enviadas pela API.
-- Para abrir o modo Web, use servidor local (`http://`), não `file://`.
+- As configurações visuais por personagem (sprites e animações) são declaradas nas classes PHP e enviadas pela API ao frontend.
+- Para o modo Web sem Docker, use servidor local (`http://`), não `file://`.
