@@ -7,7 +7,7 @@ class Profe extends Personagem {
 	const CUSTO_RED_BILL = 120;
 	const CUSTO_APELACAO = 180;
 	const CUSTO_VIBECODE = 140;
-	const CURA_RED_BILL = 90;
+	const CURA_RED_BILL = 67;
 	const DANO_APELACAO = 100;
 	const DANO_VIBECODE = 70;
 	const REGENERACAO_PROPRIA = 35;

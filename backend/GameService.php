@@ -322,6 +322,8 @@ class GameService {
 
         $message = self::executeAction($current, $opponent, $actionType, $skillIndex);
 
+        $game['lastActionDodged'] = $opponent->getUltimoDodge();
+
         $turnosParalisados = $efeitos['skipTurns'];
         if ($efeitos['skipTurnsChance'] > 0 && random_int(1, 100) <= $efeitos['skipTurnsChance']) {
             $turnosParalisados = max($turnosParalisados, 1);
@@ -378,6 +380,7 @@ class GameService {
             'winner' => $winner,
             'domainTurnsRemaining' => (int)($game['domain']['turnsRemaining'] ?? 0),
             'domainCasterKey' => $game['domain']['casterKey'] ?? null,
+            'lastActionDodged' => (bool)($game['lastActionDodged'] ?? false),
             'p1' => self::exportCharacter($p1, 'Jogador 1'),
             'p2' => self::exportCharacter($p2, 'Jogador 2'),
             'availableActions' => $winner ? [] : self::buildAvailableActions($current),

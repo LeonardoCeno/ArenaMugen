@@ -18,6 +18,7 @@ abstract class Personagem {
     protected int $queimaduraDanoPorTurno = 0;
     protected string $ultimoTipoDano = 'direct';
     protected ?string $proximoTipoDanoRecebido = null;
+    protected bool $ultimoDodge = false;
 
     const REGENERACAO_ENERGIA = 10;
 
@@ -142,7 +143,12 @@ abstract class Personagem {
     }
 
     protected function tentouDesviarAtaque(): bool {
-        return random_int(1, 100) <= 10;
+        $this->ultimoDodge = random_int(1, 100) <= 10;
+        return $this->ultimoDodge;
+    }
+
+    public function getUltimoDodge(): bool {
+        return $this->ultimoDodge;
     }
 
     protected function tentouCriticoAtaque(): bool {

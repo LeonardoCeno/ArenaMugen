@@ -151,7 +151,7 @@ import { createAnimationController } from "./battle-animations.js";
 
 			if (resposta.state) {
 				aplicarNovoEstado(resposta.state, true);
-				if (mensagem.includes("desviou!") && acao.targetsOpponent) {
+				if (resposta.state.lastActionDodged && acao.targetsOpponent) {
 					animations.animarEsquiva(defensorKey);
 				}
 			}
