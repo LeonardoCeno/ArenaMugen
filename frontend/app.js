@@ -225,14 +225,21 @@ import { createAnimationController } from "./battle-animations.js";
 	function buildCharPickers(catalog) {
 		document.querySelectorAll(".char-picker").forEach((picker) => {
 			const defaultKey = document.getElementById(picker.dataset.for).value;
-			picker.innerHTML = catalog
-				.map(
-					(c) =>
-						`<button type="button" class="char-option${c.key === defaultKey ? " is-selected" : ""}" data-value="${c.key}">` +
-						`<img src="${c.selectSprite}" alt="${c.label}" />` +
-						`<span>${c.label}</span></button>`
-				)
-				.join("");
+			picker.replaceChildren(
+				...catalog.map((c) => {
+					const btn = document.createElement("button");
+					btn.type = "button";
+					btn.className = "char-option" + (c.key === defaultKey ? " is-selected" : "");
+					btn.dataset.value = c.key;
+					const img = document.createElement("img");
+					img.src = c.selectSprite;
+					img.alt = c.label;
+					const span = document.createElement("span");
+					span.textContent = c.label;
+					btn.append(img, span);
+					return btn;
+				})
+			);
 		});
 	}
 
@@ -245,7 +252,9 @@ import { createAnimationController } from "./battle-animations.js";
 		document.getElementById(picker.dataset.for).value = opt.dataset.value;
 	});
 
-	chamarApi("catalog").then((data) => buildCharPickers(data.catalog ?? []));
+	chamarApi("catalog")
+		.then((data) => buildCharPickers(data.catalog ?? []))
+		.catch((erro) => ui.adicionarLog(`Erro ao carregar personagens: ${erro.message}`));
 
 	els.startBtn.addEventListener("click", iniciar);
 	els.playAgainBtn.addEventListener("click", resetarParaSetup);

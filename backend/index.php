@@ -27,7 +27,7 @@ function escolherPersonagem(int $jogador): Personagem {
     echo "Jogador {$jogador}, escolha seu personagem:\n";
 
     foreach ($catalogo as $index => $item) {
-        echo ($index + 1) . ". " . $item['description'] . "\n";
+        echo ($index + 1) . ". " . $item['label'] . "\n";
     }
 
     do {
@@ -57,7 +57,7 @@ function exibirAcoesDisponiveis(Personagem $atual): array {
     echo "\nAções disponíveis:\n";
 
     foreach ($acoes as $index => $acao) {
-        echo ($index + 1) . ". " . $acao['label'] . "\n";
+        echo $index + 1 . ". " . $acao['label'] . "\n";
     }
 
     echo "Escolha uma ação: ";

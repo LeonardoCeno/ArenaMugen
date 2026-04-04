@@ -4,7 +4,6 @@ require_once __DIR__ . '/../../Personagem.php';
 
 class Sans extends Personagem {
 
-    const CUSTO_EEEEH = 0;
     const DANO_EEEEH = 999;
     const REGENERACAO_PROPRIA = 0;
 
@@ -45,7 +44,6 @@ class Sans extends Personagem {
     }
 
     public function eeeeh(Personagem $alvo): string {
-        $this->consumirEnergia(self::CUSTO_EEEEH);
         $resultado = $this->executarAtaqueDireto($alvo, "eeeeh", self::DANO_EEEEH);
 
         return $resultado['mensagem'];
@@ -68,7 +66,7 @@ class Sans extends Personagem {
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'eeeeh' => 'Causa 999 de dano fixo. Custo: ' . self::CUSTO_EEEEH . ' energia.',
+            'eeeeh' => 'Causa 999 de dano fixo.',
         ]);
     }
 

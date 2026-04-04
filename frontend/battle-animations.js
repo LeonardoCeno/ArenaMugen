@@ -139,8 +139,8 @@ export function createAnimationController({ state, els, atualizarHUD }) {
 		state.domainImage = null;
 		state.domainCutsActive = false;
 		limparCortesDominioSukuna();
-		document
-			.querySelectorAll(".arena-action-overlay, .arena-energy-beam, .fighter-action-overlay")
+		els.arena
+			?.querySelectorAll(".arena-action-overlay, .arena-energy-beam, .fighter-action-overlay")
 			.forEach((el) => el.remove());
 	}
 

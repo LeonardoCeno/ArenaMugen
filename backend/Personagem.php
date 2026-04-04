@@ -118,27 +118,7 @@ abstract class Personagem {
     }
 
     public function atacar(Personagem $alvo): string {
-        if ($alvo->tentouDesviarAtaque()) {
-            return "{$this->nome} usou Ataque em {$alvo->getNome()}, mas {$alvo->getNome()} desviou!";
-        }
-
-        $vidaAntes = $alvo->getVidaAtual();
-        $danoReal = max(0, $this->ataque);
-        $foiCritico = $this->tentouCriticoAtaque();
-
-        if ($foiCritico) {
-                $danoReal = (int) ceil($danoReal * 2);
-        }
-
-        $alvo->receberDano($danoReal);
-
-        $mensagem = $this->formatarMensagemAcaoComAlvo("Ataque", $alvo, $vidaAntes, $danoReal);
-
-        if ($foiCritico && $danoReal > 0) {
-            $mensagem .= " Acerto crítico!";
-        }
-
-        return $mensagem;
+        return $this->executarAtaqueDireto($alvo, "Ataque", max(0, $this->ataque))['mensagem'];
     }
 
     protected function tentouDesviarAtaque(): bool {
@@ -258,32 +238,26 @@ abstract class Personagem {
         $this->ultimoTipoDano = $tipo;
     }
 
-    private function processarSangramento(): void {
-        if ($this->sangramentoTurnos <= 0 || $this->sangramentoDanoPorTurno <= 0) {
+    private function processarEfeitoContinuo(string $tipo, int &$turnos, int &$danoPorTurno): void {
+        if ($turnos <= 0 || $danoPorTurno <= 0) {
             return;
         }
 
-        $this->definirTipoDoProximoDanoRecebido('bleed');
-        $this->receberDano($this->sangramentoDanoPorTurno);
-        $this->sangramentoTurnos--;
+        $this->definirTipoDoProximoDanoRecebido($tipo);
+        $this->receberDano($danoPorTurno);
+        $turnos--;
 
-        if ($this->sangramentoTurnos <= 0) {
-            $this->sangramentoDanoPorTurno = 0;
+        if ($turnos <= 0) {
+            $danoPorTurno = 0;
         }
     }
 
+    private function processarSangramento(): void {
+        $this->processarEfeitoContinuo('bleed', $this->sangramentoTurnos, $this->sangramentoDanoPorTurno);
+    }
+
     private function processarQueimadura(): void {
-        if ($this->queimaduraTurnos <= 0 || $this->queimaduraDanoPorTurno <= 0) {
-            return;
-        }
-
-        $this->definirTipoDoProximoDanoRecebido('burn');
-        $this->receberDano($this->queimaduraDanoPorTurno);
-        $this->queimaduraTurnos--;
-
-        if ($this->queimaduraTurnos <= 0) {
-            $this->queimaduraDanoPorTurno = 0;
-        }
+        $this->processarEfeitoContinuo('burn', $this->queimaduraTurnos, $this->queimaduraDanoPorTurno);
     }
 
     public function getHabilidades(): array {
@@ -304,14 +278,16 @@ abstract class Personagem {
         ];
     }
 
+    private function getShortClassName(): string {
+        return (new ReflectionClass($this))->getShortName();
+    }
+
     public function getClasse(): string {
-        $ref = new ReflectionClass($this);
-        return strtolower($ref->getShortName());
+        return strtolower($this->getShortClassName());
     }
 
     public function getClasseNome(): string {
-        $ref = new ReflectionClass($this);
-        return $ref->getShortName();
+        return $this->getShortClassName();
     }
 
     public function usaSomenteHabilidades(): bool {

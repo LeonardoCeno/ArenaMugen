@@ -82,7 +82,7 @@ class GameService {
             $visual = $personagem->getConfiguracaoVisual();
             $catalogo[] = [
                 'key'          => $key,
-                'label'        => (new \ReflectionClass($className))->getShortName(),
+                'label'        => $personagem->getClasseNome(),
                 'selectSprite' => $visual['selectSprite'] ?? $visual['baseSprite'] ?? null,
             ];
         }
@@ -337,10 +337,12 @@ class GameService {
     public static function performTurn(array &$game, string $actionType, ?int $skillIndex = null): string {
         [$currentKey, $current, $opponent] = self::getCurrentAndOpponent($game);
 
-        $efeitos = $actionType === 'skill' ? self::obterEfeitosSkill($current, $skillIndex) : ['skipTurns' => 0, 'skipTurnsChance' => 0, 'activatesDomain' => false];
+        $efeitos = ['skipTurns' => 0, 'skipTurnsChance' => 0, 'activatesDomain' => false];
 
         if ($actionType === 'skill' && $skillIndex !== null) {
             $habilidades = $current->getHabilidades();
+            $efeitos = self::obterEfeitosSkill($current, $skillIndex);
+
             if (isset($habilidades[$skillIndex])) {
                 $nomSkill = (string)($habilidades[$skillIndex]['nome'] ?? '');
                 $custo = self::extrairCustoEnergiaDaDescricao(
