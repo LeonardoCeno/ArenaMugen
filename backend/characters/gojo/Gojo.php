@@ -5,13 +5,13 @@ require_once __DIR__ . '/../../Personagem.php';
 class Gojo extends Personagem {
 
     const CUSTO_INFINITO = 300;
-    const CUSTO_REVERSE = 150;
+    const CUSTO_REVERSE = 200;
     const CUSTO_VAZIO_ROXO = 200;
     const CUSTO_AZUL = 100;
     const REGENERACAO_PROPRIA = 50;
 
     public function __construct(string $nome) {
-        parent::__construct($nome, 200, 20, 1000);
+        parent::__construct($nome, 300, 20, 1000);
     }
 
     public static function getDescricao(): string {
@@ -39,7 +39,7 @@ class Gojo extends Personagem {
 
     public function reverseEnergy(): string {
         $this->consumirEnergia(self::CUSTO_REVERSE);
-        $this->curarVida(70);
+        $this->curarVida(100);
 
         return $this->formatarMensagemAcaoSemAlvo("Reverse Energy");
     }
@@ -55,35 +55,11 @@ class Gojo extends Personagem {
     }
 
     public function getHabilidades(): array {
-
         return [
-
-            [
-                "nome" => "Azul",
-                "metodo" => "azul",
-                "precisaAlvo" => true
-            ],
-
-            [
-                "nome" => "Vazio Roxo",
-                "metodo" => "vazioRoxo",
-                "precisaAlvo" => true
-            ],
-
-            [
-                "nome" => "Reverse Energy",
-                "metodo" => "reverseEnergy",
-                "precisaAlvo" => false
-            ],
-
-            [
-                "nome" => "Domain",
-                "metodo" => "infinityVoid",
-                "precisaAlvo" => false,
-                "skipTurns" => 2,
-                "activatesDomain" => true,
-            ]
-
+            ["nome" => "Azul",          "metodo" => "azul",          "precisaAlvo" => true,  "energyCost" => self::CUSTO_AZUL],
+            ["nome" => "Vazio Roxo",    "metodo" => "vazioRoxo",     "precisaAlvo" => true,  "energyCost" => self::CUSTO_VAZIO_ROXO],
+            ["nome" => "Reverse Energy","metodo" => "reverseEnergy", "precisaAlvo" => false, "energyCost" => self::CUSTO_REVERSE],
+            ["nome" => "Domain",        "metodo" => "infinityVoid",  "precisaAlvo" => false, "energyCost" => self::CUSTO_INFINITO, "skipTurns" => 2, "activatesDomain" => true]
         ];
     }
 
@@ -120,7 +96,7 @@ class Gojo extends Personagem {
                             'sprite' => './assets/gojo/sprites/gojoazulfinalreal.png',
                             'durationMs' => 1500,
                         ],
-                                                [
+                        [
                             'sprite' => './assets/gojo/sprites/gojoblockrealreal.png',
                             'durationMs' => 200,
                         ],

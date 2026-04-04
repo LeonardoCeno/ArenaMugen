@@ -5,17 +5,17 @@ require_once __DIR__ . '/../../Personagem.php';
 class Miku extends Personagem {
 
     const CUSTO_MIKUPOWER = 100;
-    const CUSTO_MY_VOICE = 120;
-    const CUSTO_MIKU_BEEAM = 90;
+    const CUSTO_MY_VOICE = 90;
+    const CUSTO_MIKU_BEEAM = 120;
     const CUSTO_MAGIC = 130;
-    const CURA_MIKUPOWER = 80;
+    const CURA_MIKUPOWER = 100;
     const DANO_MY_VOICE = 60;
     const DANO_MIKU_BEEAM = 120;
     const DANO_MAGIC = 80;
     const REGENERACAO_PROPRIA = 30;
 
     public function __construct(string $nome) {
-        parent::__construct($nome, 200, 20, 300);
+        parent::__construct($nome, 200, 20, 500);
     }
 
     public static function getDescricao(): string {
@@ -56,26 +56,10 @@ class Miku extends Personagem {
 
     public function getHabilidades(): array {
         return [
-            [
-                "nome" => "MAGIC!",
-                "metodo" => "magic",
-                "precisaAlvo" => true
-            ],
-            [
-                "nome" => "Miku BEEAM",
-                "metodo" => "mikuBeeam",
-                "precisaAlvo" => true
-            ],
-            [
-                "nome" => "MY VOICE",
-                "metodo" => "myVoice",
-                "precisaAlvo" => true
-            ],
-            [
-                "nome" => "mikupower",
-                "metodo" => "mikupower",
-                "precisaAlvo" => false
-            ]
+            ["nome" => "MAGIC!",    "metodo" => "magic",      "precisaAlvo" => true,  "energyCost" => self::CUSTO_MAGIC],
+            ["nome" => "Miku BEEAM","metodo" => "mikuBeeam",  "precisaAlvo" => true,  "energyCost" => self::CUSTO_MIKU_BEEAM],
+            ["nome" => "MY VOICE",  "metodo" => "myVoice",    "precisaAlvo" => true,  "energyCost" => self::CUSTO_MY_VOICE],
+            ["nome" => "mikupower", "metodo" => "mikupower",  "precisaAlvo" => false, "energyCost" => self::CUSTO_MIKUPOWER]
         ];
     }
 

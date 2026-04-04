@@ -7,11 +7,11 @@ class Sukuna extends Personagem {
     const CUSTO_DESMANTELAR = 550;
     const CUSTO_KAMINO_FUGA = 800;
     const CUSTO_DOMAIN = 1900;
-    const CUSTO_REVERSE = 500;
+    const CUSTO_REVERSE = 700;
     const REGENERACAO_PROPRIA = 70;
 
     public function __construct(string $nome) {
-        parent::__construct($nome, 200, 25, 4000);
+        parent::__construct($nome, 300, 25, 4000);
     }
 
     public static function getDescricao(): string {
@@ -66,7 +66,7 @@ class Sukuna extends Personagem {
 
     public function reverseEnergy(): string {
         $this->consumirEnergia(self::CUSTO_REVERSE);
-        $this->curarVida(70);
+        $this->curarVida(100);
 
         return $this->formatarMensagemAcaoSemAlvo("Reverse Energy");
     }
@@ -96,26 +96,10 @@ class Sukuna extends Personagem {
 
     public function getHabilidades(): array {
         return [
-            [
-                "nome" => "Desmantelar",
-                "metodo" => "usarHabilidadeEspecial",
-                "precisaAlvo" => true
-            ],
-            [
-                "nome" => "Kamino Fuga",
-                "metodo" => "kaminoFuga",
-                "precisaAlvo" => true
-            ],
-            [
-                "nome" => "Reverse Energy",
-                "metodo" => "reverseEnergy",
-                "precisaAlvo" => false
-            ],
-            [
-                "nome" => "Domain",
-                "metodo" => "santuarioMalevolente",
-                "precisaAlvo" => true
-            ]
+            ["nome" => "Desmantelar",   "metodo" => "usarHabilidadeEspecial", "precisaAlvo" => true,  "energyCost" => self::CUSTO_DESMANTELAR],
+            ["nome" => "Kamino Fuga",   "metodo" => "kaminoFuga",             "precisaAlvo" => true,  "energyCost" => self::CUSTO_KAMINO_FUGA],
+            ["nome" => "Reverse Energy","metodo" => "reverseEnergy",          "precisaAlvo" => false, "energyCost" => self::CUSTO_REVERSE],
+            ["nome" => "Domain",        "metodo" => "santuarioMalevolente",   "precisaAlvo" => true,  "energyCost" => self::CUSTO_DOMAIN]
         ];
     }
 
@@ -181,7 +165,7 @@ class Sukuna extends Personagem {
                             'y' => 0,
                             'scale' => 1,
                         ],
-                         [
+                        [
                             'target' => 'opponent',
                             'sprite' => './assets/sukuna/sprites/CORTE2.png',
                             'startMs' => 600,

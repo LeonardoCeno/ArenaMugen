@@ -47,21 +47,9 @@ class Profe extends Personagem {
 
 	public function getHabilidades(): array {
 		return [
-			[
-				'nome' => 'Red bill',
-				'metodo' => 'redBill',
-				'precisaAlvo' => false,
-			],
-			[
-				'nome' => 'Apelação',
-				'metodo' => 'apelacao',
-				'precisaAlvo' => true,
-			],
-			[
-				'nome' => 'VibeCode',
-				'metodo' => 'vibeCode',
-				'precisaAlvo' => true,
-			],
+			["nome" => "Red bill", "metodo" => "redBill", "precisaAlvo" => false, "energyCost" => self::CUSTO_RED_BILL],
+			["nome" => "Apelação", "metodo" => "apelacao", "precisaAlvo" => true,  "energyCost" => self::CUSTO_APELACAO],
+			["nome" => "VibeCode", "metodo" => "vibeCode", "precisaAlvo" => true,  "energyCost" => self::CUSTO_VIBECODE],
 		];
 	}
 

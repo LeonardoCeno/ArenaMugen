@@ -242,14 +242,6 @@ class GameService {
         return [$currentKey, $current, $opponent];
     }
 
-    private static function extrairCustoEnergiaDaDescricao(string $descricao): int {
-        if (preg_match('/Custo:\s*(\d+)\s*energia/i', $descricao, $matches) === 1) {
-            return (int)$matches[1];
-        }
-
-        return 0;
-    }
-
     public static function buildAvailableActions(Personagem $current): array {
         $descricoes = $current->getDescricoesAcoes();
         $actions = [];
@@ -276,14 +268,12 @@ class GameService {
         }
 
         foreach ($current->getHabilidades() as $index => $habilidade) {
-            $descricao = (string)($descricoes[(string)$habilidade['nome']] ?? '');
-            $custoEnergia = self::extrairCustoEnergiaDaDescricao($descricao);
-
+            $custoEnergia = (int)($habilidade['energyCost'] ?? 0);
             $actions[] = [
                 'type' => 'skill',
                 'label' => strtoupper((string)$habilidade['nome']),
                 'skillName' => (string)$habilidade['nome'],
-                'description' => $descricao,
+                'description' => (string)($descricoes[(string)$habilidade['nome']] ?? ''),
                 'skillIndex' => $index,
                 'targetsOpponent' => (bool)$habilidade['precisaAlvo'],
                 'energyCost' => $custoEnergia,
@@ -343,14 +333,9 @@ class GameService {
             $habilidades = $current->getHabilidades();
             $efeitos = self::obterEfeitosSkill($current, $skillIndex);
 
-            if (isset($habilidades[$skillIndex])) {
-                $nomSkill = (string)($habilidades[$skillIndex]['nome'] ?? '');
-                $custo = self::extrairCustoEnergiaDaDescricao(
-                    (string)($current->getDescricoesAcoes()[$nomSkill] ?? '')
-                );
-                if ($custo > 0 && $current->getEnergiaAtual() < $custo) {
-                    throw new EntradaInvalidaException();
-                }
+            $custo = (int)($habilidades[$skillIndex]['energyCost'] ?? 0);
+            if ($custo > 0 && $current->getEnergiaAtual() < $custo) {
+                throw new EntradaInvalidaException();
             }
         }
 

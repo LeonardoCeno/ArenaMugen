@@ -154,9 +154,7 @@ abstract class Personagem {
     }
 
     protected function consumirEnergia(int $custo): void {
-        if ($custo < 0) {
-            $custo = 0;
-        }
+        $custo = max(0, $custo);
 
         if ($this->energiaAtual < $custo) {
             throw new EnergiaInsuficienteException();
