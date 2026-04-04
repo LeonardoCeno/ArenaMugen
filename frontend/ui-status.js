@@ -16,6 +16,10 @@ function classePerigosa(hpAtual, hpMax) {
 	return hpMax > 0 && hpAtual / hpMax <= 0.3;
 }
 
+function obterCustoEnergiaAcao(acao) {
+	return Number(acao?.energyCost) || 0;
+}
+
 export function createUIController({ state, els, onActionSelected }) {
 	function adicionarLog(texto) {
 		const li = document.createElement("li");
@@ -133,7 +137,10 @@ export function createUIController({ state, els, onActionSelected }) {
 				btn.disabled = !habilitado || totalPaginas <= 1;
 				return;
 			}
-			if (btn.textContent.trim() !== "-") btn.disabled = !habilitado;
+
+			if (btn.textContent.trim() !== "-") {
+				btn.disabled = !habilitado;
+			}
 		});
 	}
 
@@ -142,6 +149,7 @@ export function createUIController({ state, els, onActionSelected }) {
 		const server = state.serverState;
 		if (!server || !server.started || server.winner) return;
 
+		const energiaAtual = Number(server[server.currentKey]?.energiaAtual ?? 0);
 		const acoes = (server.availableActions || []).map((acao) => ({
 			...acao,
 			nome: acao.label,
@@ -179,12 +187,21 @@ export function createUIController({ state, els, onActionSelected }) {
 				btn.disabled = true;
 			} else {
 				const nomeAcao = acao.nomeSprite || acao.nome;
+				const custoEnergia = obterCustoEnergiaAcao(acao);
+				const semEnergia = Boolean(acao.disabled) || custoEnergia > energiaAtual;
 				const descricaoAcao = obterDescricaoAcao(acao);
+
+				btn.classList.toggle("is-disabled-by-energy", semEnergia);
+				if (semEnergia) btn.tabIndex = -1;
+
 				btn.addEventListener("mouseenter", () => mostrarPreviewSkill(nomeAcao, descricaoAcao));
 				btn.addEventListener("mouseleave", esconderPreviewSkill);
 				btn.addEventListener("focus", () => mostrarPreviewSkill(nomeAcao, descricaoAcao));
 				btn.addEventListener("blur", esconderPreviewSkill);
-				btn.addEventListener("click", () => onActionSelected(acao));
+				btn.addEventListener("click", () => {
+					if (semEnergia || state.resolvendoAcao) return;
+					onActionSelected(acao);
+				});
 			}
 
 			els.menu.appendChild(btn);

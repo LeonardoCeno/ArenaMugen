@@ -240,6 +240,14 @@ class GameService {
         return [$currentKey, $current, $opponent];
     }
 
+    private static function extrairCustoEnergiaDaDescricao(string $descricao): int {
+        if (preg_match('/Custo:\s*(\d+)\s*energia/i', $descricao, $matches) === 1) {
+            return (int)$matches[1];
+        }
+
+        return 0;
+    }
+
     public static function buildAvailableActions(Personagem $current): array {
         $descricoes = $current->getDescricoesAcoes();
         $actions = [];
@@ -251,6 +259,8 @@ class GameService {
                 'skillName' => 'Ataque',
                 'description' => (string)($descricoes['Ataque'] ?? ''),
                 'targetsOpponent' => true,
+                'energyCost' => 0,
+                'disabled' => false,
             ];
             $actions[] = [
                 'type' => 'defend',
@@ -258,17 +268,24 @@ class GameService {
                 'skillName' => 'Defesa',
                 'description' => (string)($descricoes['Defesa'] ?? ''),
                 'targetsOpponent' => false,
+                'energyCost' => 0,
+                'disabled' => false,
             ];
         }
 
         foreach ($current->getHabilidades() as $index => $habilidade) {
+            $descricao = (string)($descricoes[(string)$habilidade['nome']] ?? '');
+            $custoEnergia = self::extrairCustoEnergiaDaDescricao($descricao);
+
             $actions[] = [
                 'type' => 'skill',
                 'label' => strtoupper((string)$habilidade['nome']),
                 'skillName' => (string)$habilidade['nome'],
-                'description' => (string)($descricoes[(string)$habilidade['nome']] ?? ''),
+                'description' => $descricao,
                 'skillIndex' => $index,
                 'targetsOpponent' => (bool)$habilidade['precisaAlvo'],
+                'energyCost' => $custoEnergia,
+                'disabled' => $current->getEnergiaAtual() < $custoEnergia,
             ];
         }
 
@@ -319,6 +336,19 @@ class GameService {
         [$currentKey, $current, $opponent] = self::getCurrentAndOpponent($game);
 
         $efeitos = $actionType === 'skill' ? self::obterEfeitosSkill($current, $skillIndex) : ['skipTurns' => 0, 'skipTurnsChance' => 0, 'activatesDomain' => false];
+
+        if ($actionType === 'skill' && $skillIndex !== null) {
+            $habilidades = $current->getHabilidades();
+            if (isset($habilidades[$skillIndex])) {
+                $nomSkill = (string)($habilidades[$skillIndex]['nome'] ?? '');
+                $custo = self::extrairCustoEnergiaDaDescricao(
+                    (string)($current->getDescricoesAcoes()[$nomSkill] ?? '')
+                );
+                if ($custo > 0 && $current->getEnergiaAtual() < $custo) {
+                    throw new EntradaInvalidaException();
+                }
+            }
+        }
 
         $message = self::executeAction($current, $opponent, $actionType, $skillIndex);
 

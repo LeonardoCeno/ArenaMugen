@@ -655,6 +655,20 @@ body {
   background: linear-gradient(180deg, #394157, #2e3548);
 }
 
+.grid-actions button:disabled {
+  opacity: 0.48;
+}
+
+.grid-actions button.is-disabled-by-energy {
+  opacity: 0.48;
+  filter: brightness(0.82);
+}
+
+.grid-actions button:disabled:hover,
+.grid-actions button.is-disabled-by-energy:hover {
+  transform: none;
+}
+
 .grid-actions button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;

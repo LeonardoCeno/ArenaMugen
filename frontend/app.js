@@ -126,20 +126,13 @@ import { createAnimationController } from "./battle-animations.js";
 		const errorSplash = state.serverState[atacanteKey]?.visual?.errorSplash ?? null;
 
 		animations.cancelAnimation();
-		const animacaoAtiva = animations.runTimeline(
-			animations.buildAnimation(atacanteKey, acao, defensorKey, defensorEstaDefendendo)
-		);
-		state.anim = animacaoAtiva;
 
 		try {
-			await animations.esperar(animacaoAtiva.duration);
-
 			const resposta = await chamarApi("action", {
 				actionType: acao.type,
 				skillIndex: typeof acao.skillIndex === "number" ? acao.skillIndex : null,
 			});
 
-			animations.cancelAnimation();
 			const mensagem = resposta.message || "Ação executada.";
 
 			if (resposta.state?.started === false) {
@@ -148,6 +141,14 @@ import { createAnimationController } from "./battle-animations.js";
 				ui.adicionarLog(mensagem);
 				return;
 			}
+
+			const animacaoAtiva = animations.runTimeline(
+				animations.buildAnimation(atacanteKey, acao, defensorKey, defensorEstaDefendendo)
+			);
+			state.anim = animacaoAtiva;
+
+			await animations.esperar(animacaoAtiva.duration);
+			animations.cancelAnimation();
 
 			if (resposta.state) {
 				aplicarNovoEstado(resposta.state, true);
