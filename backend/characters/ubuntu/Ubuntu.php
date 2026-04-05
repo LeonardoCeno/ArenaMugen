@@ -39,7 +39,7 @@ class Ubuntu extends Personagem {
 		return true;
 	}
 
-	public function deveRetornarAoSetupAposTurno(string $metodo): bool {
+	public function retornaAoSetup(string $metodo): bool {
 		return $metodo === 'erro';
 	}
 

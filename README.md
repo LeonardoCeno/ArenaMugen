@@ -13,7 +13,7 @@ Requisitos: [Docker](https://docs.docker.com/get-docker/) instalado.
 docker compose up --build
 ```
 
-Abra no navegador: `http://localhost:8080`
+Abra no navegador: `http://localhost:8080/frontend/batalha.html`
 
 ## Rodar sem Docker
 

@@ -66,7 +66,7 @@ function executarAcao(array $input): void {
 
     $actionType = (string)($input['actionType'] ?? '');
     $skillIndex = isset($input['skillIndex']) ? (int)$input['skillIndex'] : null;
-    $deveRetornarSetup = GameService::deveRetornarParaSetupPorErro($game, $actionType, $skillIndex);
+    $deveRetornarSetup = GameService::retornaAoSetup($game, $actionType, $skillIndex);
 
     $mensagem = GameService::performTurn($game, $actionType, $skillIndex);
 

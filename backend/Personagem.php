@@ -121,11 +121,11 @@ abstract class Personagem {
         return $this->executarAtaqueDireto($alvo, "Ataque", max(0, $this->ataque))['mensagem'];
     }
 
-    protected function tentouDesviarAtaque(): bool {
+    protected function sorteouDesvio(): bool {
         return random_int(1, 100) <= 10;
     }
 
-    protected function tentouCriticoAtaque(): bool {
+    protected function sorteouCritico(): bool {
         return random_int(1, 100) <= 5;
     }
 
@@ -176,7 +176,7 @@ abstract class Personagem {
     }
 
     protected function executarAtaqueDireto(Personagem $alvo, string $nomeAcao, int $dano): array {
-        if ($alvo->tentouDesviarAtaque()) {
+        if ($alvo->sorteouDesvio()) {
             return [
                 'acertou' => false,
                 'vidaAntes' => $alvo->getVidaAtual(),
@@ -188,7 +188,7 @@ abstract class Personagem {
 
         $vidaAntes = $alvo->getVidaAtual();
         $danoReal = max(0, $dano);
-        $foiCritico = $this->tentouCriticoAtaque();
+        $foiCritico = $this->sorteouCritico();
 
         if ($foiCritico) {
                 $danoReal = (int) ceil($danoReal * 2);
@@ -276,23 +276,23 @@ abstract class Personagem {
         ];
     }
 
-    private function getShortClassName(): string {
+    private function nomeClasse(): string {
         return (new ReflectionClass($this))->getShortName();
     }
 
     public function getClasse(): string {
-        return strtolower($this->getShortClassName());
+        return strtolower($this->nomeClasse());
     }
 
     public function getClasseNome(): string {
-        return $this->getShortClassName();
+        return $this->nomeClasse();
     }
 
     public function usaSomenteHabilidades(): bool {
         return false;
     }
 
-    public function deveRetornarAoSetupAposTurno(string $metodo): bool {
+    public function retornaAoSetup(string $metodo): bool {
         return false;
     }
 

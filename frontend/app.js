@@ -222,7 +222,7 @@ import { createAnimationController } from "./battle-animations.js";
 		onActionSelected: processarAcaoComAnimacao,
 	});
 
-	function buildCharPickers(catalog) {
+	function construirSeletoresPersonagem(catalog) {
 		document.querySelectorAll(".char-picker").forEach((picker) => {
 			const defaultKey = document.getElementById(picker.dataset.for).value;
 			picker.replaceChildren(
@@ -253,7 +253,7 @@ import { createAnimationController } from "./battle-animations.js";
 	});
 
 	chamarApi("catalog")
-		.then((data) => buildCharPickers(data.catalog ?? []))
+		.then((data) => construirSeletoresPersonagem(data.catalog ?? []))
 		.catch((erro) => ui.adicionarLog(`Erro ao carregar personagens: ${erro.message}`));
 
 	els.startBtn.addEventListener("click", iniciar);

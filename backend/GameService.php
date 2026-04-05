@@ -156,7 +156,7 @@ class GameService {
         ];
     }
 
-    private static function consumirTurnoExtraDoCaster(array &$game, string $currentKey): void {
+    private static function consumirTurnoExtraDoLancador(array &$game, string $currentKey): void {
         $domainTurns = (int)($game['domain']['turnsRemaining'] ?? 0);
         $domainCaster = (string)($game['domain']['casterKey'] ?? '');
         $domainTarget = (string)($game['domain']['targetKey'] ?? '');
@@ -284,7 +284,7 @@ class GameService {
         return $actions;
     }
 
-    public static function deveRetornarParaSetupPorErro(array $game, string $actionType, ?int $skillIndex = null): bool {
+    public static function retornaAoSetup(array $game, string $actionType, ?int $skillIndex = null): bool {
         if ($actionType !== 'skill') {
             return false;
         }
@@ -292,7 +292,7 @@ class GameService {
         [, $current] = self::getCurrentAndOpponent($game);
         $metodoSkill = self::obterMetodoSkill($current, $skillIndex);
 
-        return $metodoSkill !== null && $current->deveRetornarAoSetupAposTurno($metodoSkill);
+        return $metodoSkill !== null && $current->retornaAoSetup($metodoSkill);
     }
 
     public static function executeAction(Personagem $current, Personagem $opponent, string $actionType, ?int $skillIndex = null): string {
@@ -350,7 +350,7 @@ class GameService {
             self::aplicarEfeitoParalisia($game, $currentKey, $turnosParalisados, $efeitos['activatesDomain']);
         }
 
-        self::consumirTurnoExtraDoCaster($game, $currentKey);
+        self::consumirTurnoExtraDoLancador($game, $currentKey);
         $current->processarEfeitosContinuosFimTurno();
 
         if (self::determineWinner($game) === null) {
