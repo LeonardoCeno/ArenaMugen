@@ -82,10 +82,10 @@ class Ulquiorra extends Personagem {
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'Cero' => 'Causa 70 de dano. Custo: ' . self::CUSTO_CERO . ' energia.',
-            'cero oscuras' => 'Causa 110 de dano. Custo: ' . self::CUSTO_TRUE_CERO . ' energia.',
-            'Barrage' => 'Causa 60 de dano. Bleed: 18 por turno por 2 turnos. Custo: ' . self::CUSTO_BARRAGE . ' energia.',
-            'Heal' => 'Cura 100 de vida. Custo: ' . self::CUSTO_HEAL . ' energia.',
+            'Cero' => 'Causa ' . self::DANO_CERO . ' de dano. Custo: ' . self::CUSTO_CERO . ' energia.',
+            'cero oscuras' => 'Causa ' . self::DANO_TRUE_CERO . ' de dano. Custo: ' . self::CUSTO_TRUE_CERO . ' energia.',
+            'Barrage' => 'Causa ' . self::DANO_BARRAGE . ' de dano. Bleed: ' . (int) ceil(self::DANO_BARRAGE * self::BARRAGE_BLEED_PERCENTUAL) . ' por turno por ' . self::BARRAGE_BLEED_TURNOS . ' turnos. Custo: ' . self::CUSTO_BARRAGE . ' energia.',
+            'Heal' => 'Cura ' . self::CURA_HEAL . ' de vida. Custo: ' . self::CUSTO_HEAL . ' energia.',
         ]);
     }
 

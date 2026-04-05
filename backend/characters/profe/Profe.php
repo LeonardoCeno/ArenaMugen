@@ -55,9 +55,9 @@ class Profe extends Personagem {
 
 	public function getDescricoesAcoes(): array {
 		return array_merge(parent::getDescricoesAcoes(), [
-			'Red bill' => 'Cura 90 de vida. Custo: ' . self::CUSTO_RED_BILL . ' energia.',
-			'Apelação' => 'Causa 100 de dano. Custo: ' . self::CUSTO_APELACAO . ' energia.',
-			'VibeCode' => 'Causa 70 de dano. Custo: ' . self::CUSTO_VIBECODE . ' energia.',
+			'Red bill' => 'Cura ' . self::CURA_RED_BILL . ' de vida. Custo: ' . self::CUSTO_RED_BILL . ' energia.',
+			'Apelação' => 'Causa ' . self::DANO_APELACAO . ' de dano. Custo: ' . self::CUSTO_APELACAO . ' energia.',
+			'VibeCode' => 'Causa ' . self::DANO_VIBECODE . ' de dano. Custo: ' . self::CUSTO_VIBECODE . ' energia.',
 		]);
 	}
 
@@ -131,7 +131,7 @@ class Profe extends Personagem {
 							'mode' => 'projectile',
 							'target' => 'opponent',
 							'sprite' => './assets/profe/sprites/DOCKERR.png',
-							'startMs' => 800,
+							'startMs' => 750,
 							'durationMs' => 900,
 							'sizePx' => 200,
 							'frontOffsetPx' => 120,

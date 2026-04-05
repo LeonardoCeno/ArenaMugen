@@ -64,7 +64,7 @@ class UbuntuKiller extends Personagem {
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'ubuntubuxa' => 'Causa 999 de dano.',
+            'ubuntubuxa' => 'Causa ' . self::DANO_UBUNTUBUXA . ' de dano.',
         ]);
     }
 

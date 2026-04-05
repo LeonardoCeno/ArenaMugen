@@ -66,7 +66,7 @@ class Sans extends Personagem {
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'eeeeh' => 'Causa 999 de dano fixo.',
+            'eeeeh' => 'Causa ' . self::DANO_EEEEH . ' de dano fixo.',
         ]);
     }
 

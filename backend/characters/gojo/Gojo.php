@@ -8,6 +8,9 @@ class Gojo extends Personagem {
     const CUSTO_REVERSE = 200;
     const CUSTO_VAZIO_ROXO = 200;
     const CUSTO_AZUL = 100;
+    const DANO_AZUL = 40;
+    const DANO_VAZIO_ROXO = 100;
+    const CURA_REVERSE = 100;
     const REGENERACAO_PROPRIA = 50;
 
     public function __construct(string $nome) {
@@ -21,8 +24,7 @@ class Gojo extends Personagem {
     public function vazioRoxo(Personagem $alvo): string {
         $this->consumirEnergia(self::CUSTO_VAZIO_ROXO);
 
-        $danoReal = $this->ataque * 5; // ignora defesa
-        $resultado = $this->executarAtaqueDireto($alvo, "Vazio Roxo", $danoReal);
+        $resultado = $this->executarAtaqueDireto($alvo, "Vazio Roxo", self::DANO_VAZIO_ROXO);
 
         return $resultado['mensagem'];
     }
@@ -30,16 +32,14 @@ class Gojo extends Personagem {
     public function azul(Personagem $alvo): string {
         $this->consumirEnergia(self::CUSTO_AZUL);
 
-        $danoBase = max(0, $this->ataque);
-        $danoReal = $danoBase * 2;
-        $resultado = $this->executarAtaqueDireto($alvo, "Azul", $danoReal);
+        $resultado = $this->executarAtaqueDireto($alvo, "Azul", self::DANO_AZUL);
 
         return $resultado['mensagem'];
     }
 
     public function reverseEnergy(): string {
         $this->consumirEnergia(self::CUSTO_REVERSE);
-        $this->curarVida(100);
+        $this->curarVida(self::CURA_REVERSE);
 
         return $this->formatarMensagemAcaoSemAlvo("Reverse Energy");
     }
@@ -65,9 +65,9 @@ class Gojo extends Personagem {
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'Azul' => 'Causa 40 de dano. Custo: ' . self::CUSTO_AZUL . ' energia.',
-            'Vazio Roxo' => 'Causa 100 de dano. Custo: ' . self::CUSTO_VAZIO_ROXO . ' energia.',
-            'Reverse Energy' => 'Cura 50 de vida. Custo: ' . self::CUSTO_REVERSE . ' energia.',
+            'Azul' => 'Causa ' . self::DANO_AZUL . ' de dano. Custo: ' . self::CUSTO_AZUL . ' energia.',
+            'Vazio Roxo' => 'Causa ' . self::DANO_VAZIO_ROXO . ' de dano. Custo: ' . self::CUSTO_VAZIO_ROXO . ' energia.',
+            'Reverse Energy' => 'Cura ' . self::CURA_REVERSE . ' de vida. Custo: ' . self::CUSTO_REVERSE . ' energia.',
             'Domain' => 'Impede o oponente de fazer qualquer ação durante 2 turnos. Custo: ' . self::CUSTO_INFINITO . ' energia.',
         ]);
     }

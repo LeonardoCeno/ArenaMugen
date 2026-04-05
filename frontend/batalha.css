@@ -180,6 +180,17 @@ body {
   color: var(--accent);
 }
 
+.char-picker[data-for="p2-class"] .char-option.is-selected {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.12);
+  color: #ff8f8f;
+}
+
+.char-picker[data-for="p2-class"] .char-option.is-selected:hover {
+  border-color: #ff8f8f;
+  background: rgba(255, 107, 107, 0.16);
+}
+
 .start-btn {
   width: 100%;
   font-weight: 700;

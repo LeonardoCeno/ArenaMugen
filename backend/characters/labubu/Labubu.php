@@ -4,8 +4,10 @@ require_once __DIR__ . '/../../Personagem.php';
 
 class Labubu extends Personagem {
 
-    const CUSTO_MorangodoAmor = 600;
-    const CUSTO_labuaura = 400;
+    const CUSTO_MORANGO_DO_AMOR = 600;
+    const CUSTO_LABUAURA = 400;
+    const DANO_MORANGO_DO_AMOR = 80;
+    const CURA_LABUAURA = 67;
 
     public function __construct(string $nome) {
         parent::__construct($nome, 300, 20, 2067);
@@ -16,21 +18,19 @@ class Labubu extends Personagem {
     }
 
     public function MorangodoAmor(Personagem $alvo): string {
-        $this->consumirEnergia(self::CUSTO_MorangodoAmor);
+        $this->consumirEnergia(self::CUSTO_MORANGO_DO_AMOR);
 
-        $dano = $this->ataque * 4;
-        $resultado = $this->executarAtaqueDireto($alvo, "MorangodoAmor", $dano);
+        $resultado = $this->executarAtaqueDireto($alvo, "MorangodoAmor", self::DANO_MORANGO_DO_AMOR);
 
         return $resultado['mensagem'];
     }
 
     public function labuaura(): string {
-        $this->consumirEnergia(self::CUSTO_labuaura);
+        $this->consumirEnergia(self::CUSTO_LABUAURA);
 
-        $cura = 67;
-        $this->curarVida($cura);
+        $this->curarVida(self::CURA_LABUAURA);
 
-        return $this->formatarMensagemAcaoSemAlvo("labuaura (cura {$cura})");
+        return $this->formatarMensagemAcaoSemAlvo("labuaura (cura " . self::CURA_LABUAURA . ")");
     }
 
     public function usarHabilidadeEspecial(Personagem $alvo): string {
@@ -39,15 +39,15 @@ class Labubu extends Personagem {
 
     public function getHabilidades(): array {
         return [
-            ["nome" => "MorangodoAmor","metodo" => "MorangodoAmor","precisaAlvo" => true,  "energyCost" => self::CUSTO_MorangodoAmor],
-            ["nome" => "labuaura",     "metodo" => "labuaura",    "precisaAlvo" => false, "energyCost" => self::CUSTO_labuaura]
+            ["nome" => "MorangodoAmor","metodo" => "MorangodoAmor","precisaAlvo" => true,  "energyCost" => self::CUSTO_MORANGO_DO_AMOR],
+            ["nome" => "labuaura",     "metodo" => "labuaura",    "precisaAlvo" => false, "energyCost" => self::CUSTO_LABUAURA]
         ];
     }
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'MorangodoAmor' => 'Causa dano moderado. Custo: ' . self::CUSTO_MorangodoAmor . ' energia.',
-            'labuaura' => 'Cura aliado (sem alvo). Custo: ' . self::CUSTO_labuaura . ' energia.',
+            'MorangodoAmor' => 'Causa ' . self::DANO_MORANGO_DO_AMOR . ' de dano. Custo: ' . self::CUSTO_MORANGO_DO_AMOR . ' energia.',
+            'labuaura' => 'Cura ' . self::CURA_LABUAURA . ' de vida. Custo: ' . self::CUSTO_LABUAURA . ' energia.',
         ]);
     }
 

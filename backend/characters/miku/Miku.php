@@ -65,10 +65,10 @@ class Miku extends Personagem {
 
     public function getDescricoesAcoes(): array {
         return array_merge(parent::getDescricoesAcoes(), [
-            'MAGIC!' => 'Causa 80 de dano. Custo: ' . self::CUSTO_MAGIC . ' energia.',
-            'Miku BEEAM' => 'Causa 70 de dano. Custo: ' . self::CUSTO_MIKU_BEEAM . ' energia.',
-            'MY VOICE' => 'Causa 60 de dano. Custo: ' . self::CUSTO_MY_VOICE . ' energia.',
-            'mikupower' => 'Regenera 80 de vida. Custo: ' . self::CUSTO_MIKUPOWER . ' energia.',
+            'MAGIC!' => 'Causa ' . self::DANO_MAGIC . ' de dano. Custo: ' . self::CUSTO_MAGIC . ' energia.',
+            'Miku BEEAM' => 'Causa ' . self::DANO_MIKU_BEEAM . ' de dano. Custo: ' . self::CUSTO_MIKU_BEEAM . ' energia.',
+            'MY VOICE' => 'Causa ' . self::DANO_MY_VOICE . ' de dano. Custo: ' . self::CUSTO_MY_VOICE . ' energia.',
+            'mikupower' => 'Regenera ' . self::CURA_MIKUPOWER . ' de vida. Custo: ' . self::CUSTO_MIKUPOWER . ' energia.',
         ]);
     }
 
