@@ -71,7 +71,6 @@ class UbuntuKiller extends Personagem {
     public function getConfiguracaoVisual(): array {
         return [
             'baseSprite' => './assets/ubuntukiller/sprites/EUBASE.png',
-            'selectSprite' => './assets/ubuntukiller/sprites/protagonista.png',
             'winImage' => './assets/ubuntukiller/sprites/EUWIN.png',
             'dodgeSprite' => './assets/ubuntukiller/sprites/ESQUIVO.png',
             'actions' => [

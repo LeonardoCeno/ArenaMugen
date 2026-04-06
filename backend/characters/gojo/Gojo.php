@@ -75,7 +75,6 @@ class Gojo extends Personagem {
     public function getConfiguracaoVisual(): array {
         return [
             'baseSprite' => './assets/gojo/sprites/GOJOBASEFINAL.png',
-            'selectSprite' => './assets/gojo/sprites/gojooutroicon.jpg',
             'winImage' => './assets/gojo/sprites/gojowin.jpg',
             'actions' => [
                 'Ataque' => [

@@ -3,7 +3,7 @@ import { createAnimationController } from "./battle-animations.js";
 
 (() => {
 	const API_URL = "../backend/web_api.php";
-
+// define URL do back e cria o objeto que guarda tudo
 	const state = {
 		serverState: null,
 		resolvendoAcao: false,
@@ -15,7 +15,7 @@ import { createAnimationController } from "./battle-animations.js";
 		domainCutsIntervalId: null,
 		domainCutsTimeouts: [],
 	};
-
+// pega todos os elementos html e guarda para usar
 	const fighterPlayerEl = document.getElementById("fighter-player");
 	const fighterEnemyEl = document.getElementById("fighter-enemy");
 
@@ -83,7 +83,7 @@ import { createAnimationController } from "./battle-animations.js";
 			updateDomainCuts: animations.atualizarEfeitoCortesDominioSukuna,
 		});
 	};
-
+// envia dos dados pro mano back, verifica se deu erro ou nao e retorna
 	async function chamarApi(action, payload = {}) {
 		const response = await fetch(API_URL, {
 			method: "POST",
@@ -112,10 +112,10 @@ import { createAnimationController } from "./battle-animations.js";
 		if (!mostrarDano || !estadoAnterior?.started || !novoEstado?.started) return;
 		animations.aplicarFeedbackDeDano(estadoAnterior, novoEstado);
 	}
-
+// aqui que executa a animation
 	async function processarAcaoComAnimacao(acao) {
 		if (state.resolvendoAcao || !state.serverState?.started || state.serverState.winner) return;
-
+//preparaçao pra animation
 		ui.esconderPreviewSkill();
 		state.resolvendoAcao = true;
 		ui.setBotoesAcaoHabilitados(false);
@@ -126,7 +126,7 @@ import { createAnimationController } from "./battle-animations.js";
 		const errorSplash = state.serverState[atacanteKey]?.visual?.errorSplash ?? null;
 
 		animations.cancelAnimation();
-
+//envia pro back
 		try {
 			const resposta = await chamarApi("action", {
 				actionType: acao.type,
@@ -174,13 +174,13 @@ import { createAnimationController } from "./battle-animations.js";
 	function resetarParaSetup() {
 		ui.resetarParaSetup(animations.cancelAnimation);
 	}
-
+//inicia a partida
 	async function iniciar() {
 		if (window.location.protocol === "file:") {
 			ui.adicionarLog("Abra pelo servidor PHP: http://127.0.0.1:8080/batalha.html");
 			return;
 		}
-
+//envia nomes e classes
 		els.startBtn.disabled = true;
 		try {
 			const resposta = await chamarApi("start", {
@@ -214,14 +214,14 @@ import { createAnimationController } from "./battle-animations.js";
 			els.startBtn.disabled = false;
 		}
 	}
-
+//cria os modulos principais passando dados que precisam
 	animations = createAnimationController({ state, els, atualizarHUD });
 	ui = createUIController({
 		state,
 		els,
 		onActionSelected: processarAcaoComAnimacao,
 	});
-
+//pagina de seleçao de personagem
 	function construirSeletoresPersonagem(catalog) {
 		document.querySelectorAll(".char-picker").forEach((picker) => {
 			const defaultKey = document.getElementById(picker.dataset.for).value;
@@ -242,7 +242,7 @@ import { createAnimationController } from "./battle-animations.js";
 			);
 		});
 	}
-
+//aqui ele pede a lista e constroi os botoes
 	chamarApi("catalog")
 		.then((data) => construirSeletoresPersonagem(data.catalog ?? []))
 		.catch((erro) => ui.adicionarLog(`Erro ao carregar personagens: ${erro.message}`));

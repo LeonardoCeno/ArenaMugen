@@ -64,7 +64,6 @@ class Profe extends Personagem {
 	public function getConfiguracaoVisual(): array {
 		return [
 			'baseSprite' => './assets/profe/sprites/smurfprofe.png',
-			'selectSprite' => './assets/profe/sprites/profeicontrue.png',
 			'winImage' => './assets/profe/sprites/WINWIN.png',
 			'actions' => [
 				'Ataque' => [

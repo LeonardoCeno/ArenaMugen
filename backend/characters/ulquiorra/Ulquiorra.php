@@ -92,7 +92,6 @@ class Ulquiorra extends Personagem {
     public function getConfiguracaoVisual(): array {
         return [
             'baseSprite' => './assets/ulquiorra/sprites/REALCIFERBASE.png',
-            'selectSprite' => './assets/ulquiorra/sprites/ulquiorraicon.jpg',
             'winImage' => './assets/ulquiorra/sprites/winulq.png',
             'actions' => [
                 'Ataque' => [
