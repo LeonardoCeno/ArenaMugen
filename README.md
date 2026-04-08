@@ -55,3 +55,4 @@ frontend/
 
 - As configurações visuais por personagem (sprites e animações) são declaradas nas classes PHP e enviadas pela API ao frontend.
 - Para o modo Web sem Docker, use servidor local (`http://`), não `file://`.
+# ProjetoDoLEo
