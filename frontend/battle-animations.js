@@ -390,31 +390,6 @@ export function createAnimationController({ state, els, atualizarHUD }) {
 		if (layer) layer.innerHTML = "";
 	}
 
-	function criarCorteAleatorioDominioSukuna() {
-		const layer = obterLayerCortesDominio();
-		if (!layer || !SPRITES_CORTES_DOMINIO_SUKUNA.length) return;
-
-		const sprite = SPRITES_CORTES_DOMINIO_SUKUNA[Math.floor(Math.random() * SPRITES_CORTES_DOMINIO_SUKUNA.length)];
-		const corte = document.createElement("img");
-		corte.className = "domain-cut";
-		corte.src = sprite;
-		corte.alt = "";
-		corte.setAttribute("aria-hidden", "true");
-		corte.style.left = `${Math.random() * 100}%`;
-		corte.style.top = `${Math.random() * 100}%`;
-		corte.style.width = "500px";
-		corte.style.transform = `translate(-50%, -50%) rotate(${Math.floor(Math.random() * 360)}deg)`;
-		layer.appendChild(corte);
-
-		const duration = 260 + Math.floor(Math.random() * 240);
-		const timeoutId = setTimeout(() => {
-			corte.remove();
-			const idx = state.domainCutsTimeouts.indexOf(timeoutId);
-			if (idx !== -1) state.domainCutsTimeouts.splice(idx, 1);
-		}, duration);
-		state.domainCutsTimeouts.push(timeoutId);
-	}
-
 	function atualizarEfeitoCortesDominioSukuna(ativo) {
 		if (!ativo) {
 			limparCortesDominioSukuna();
