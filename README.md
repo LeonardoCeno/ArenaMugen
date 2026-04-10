@@ -1,4 +1,4 @@
-# Jogo de Combate por Turnos (PHP)
+hdfjkjkjkfdfhghkjhfxcn# Jogo de Combate por Turnos (PHP)
 
 Projeto de batalha por turnos com dois modos de execução:
 
